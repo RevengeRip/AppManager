@@ -446,8 +446,25 @@ namespace AppManager {
             var applications_path = Path.build_filename(Environment.get_home_dir(), "Applications");
             var applications_dir = File.new_for_path(applications_path);
             try {
-                var info = applications_dir.query_info("standard::icon", FileQueryInfoFlags.NONE);
+                string attributes = "standard::icon";
+                bool check_custom = false;
+
+                // If Nautilus is installed, try to load custom icon from metadata
+                // because Nautilus allows setting custom folder icons
+                var nautilus = new DesktopAppInfo("org.gnome.Nautilus.desktop");
+                if (nautilus != null) {
+                    attributes += ",metadata::custom-icon";
+                    check_custom = true;
+                }
+
+                var info = applications_dir.query_info(attributes, FileQueryInfoFlags.NONE);
                 if (info != null) {
+                    if (check_custom) {
+                        var custom_icon = info.get_attribute_string("metadata::custom-icon");
+                        if (custom_icon != null) {
+                            return new FileIcon(File.new_for_uri(custom_icon));
+                        }
+                    }
                     return info.get_icon();
                 }
             } catch (Error e) {

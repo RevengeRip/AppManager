@@ -5,6 +5,7 @@ project('app-manager', ['vala', 'c'],
 
 adw_dep = dependency('libadwaita-1', version: '>=1.4')
 gio_dep = dependency('gio-2.0')
+gio_unix_dep = dependency('gio-unix-2.0')
 glib_dep = dependency('glib-2.0')
 gtk_dep = dependency('gtk4')
 json_glib_dep = dependency('json-glib-1.0')
