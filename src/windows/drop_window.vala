@@ -3,6 +3,8 @@ using AppManager.Utils;
 using Gee;
 
 namespace AppManager {
+    private delegate void DialogCallback();
+
     public class DropWindow : Adw.Window {
         private Application app_ref;
         private InstallationRegistry registry;
@@ -15,8 +17,8 @@ namespace AppManager {
         private Gtk.Image drag_ghost;
         private Gtk.Label app_name_label;
         private Gtk.Label folder_name_label;
-        private Adw.Banner version_banner;
         private Gtk.Box drag_box;
+        private Gtk.Spinner drag_spinner;
         private string appimage_path;
         private bool installing = false;
         private bool install_prompt_visible = false;
@@ -24,16 +26,16 @@ namespace AppManager {
         private string resolved_app_name;
         private string? resolved_app_version = null;
         private const double DRAG_VISUAL_RANGE = 240.0;
-        private uint version_banner_timeout_id = 0;
-
+        private bool spinner_icon_active = false;
+        private bool spinner_install_active = false;
         private Settings settings;
 
         public DropWindow(Application app, InstallationRegistry registry, Installer installer, Settings settings, string path) throws Error {
             Object(application: app,
                 title: I18n.tr("AppImage Installer"),
                 modal: true,
-                default_width: 520,
-                default_height: 320,
+                default_width: 500,
+                default_height: 300,
                 destroy_with_parent: true);
             this.app_ref = app;
             this.registry = registry;
@@ -48,16 +50,14 @@ namespace AppManager {
         }
 
         private void build_ui() {
-            this.title = I18n.tr("AppImage Installer");
+            title = I18n.tr("AppImage Installer");
 
             var toolbar_view = new Adw.ToolbarView();
             content = toolbar_view;
 
             var header = new Adw.HeaderBar();
+            header.set_show_start_title_buttons(true);
             header.set_show_end_title_buttons(true);
-            var title_widget = new Gtk.Label(I18n.tr("AppImage Installer"));
-            title_widget.add_css_class("title-4");
-            header.set_title_widget(title_widget);
             toolbar_view.add_top_bar(header);
 
             var clamp = new Adw.Clamp();
@@ -65,20 +65,7 @@ namespace AppManager {
             clamp.margin_bottom = 24;
             clamp.margin_start = 24;
             clamp.margin_end = 24;
-
-            var content_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
-            toolbar_view.content = content_box;
-
-            version_banner = new Adw.Banner("");
-            version_banner.use_markup = true;
-            version_banner.set_revealed(false);
-            version_banner.button_label = null;
-            version_banner.hexpand = true;
-            version_banner.halign = Gtk.Align.FILL;
-            version_banner.add_css_class("accent-fg-color");
-            content_box.append(version_banner);
-
-            content_box.append(clamp);
+            toolbar_view.content = clamp;
 
             var outer = new Gtk.Box(Gtk.Orientation.VERTICAL, 18);
             clamp.child = outer;
@@ -106,7 +93,19 @@ namespace AppManager {
             arrow_icon = new Gtk.Image.from_icon_name("pan-end-symbolic");
             arrow_icon.set_pixel_size(48);
             arrow_icon.add_css_class("dim-label");
-            drag_box.append(arrow_icon);
+
+            drag_spinner = new Gtk.Spinner();
+            drag_spinner.set_size_request(48, 48);
+            drag_spinner.halign = Gtk.Align.CENTER;
+            drag_spinner.valign = Gtk.Align.CENTER;
+            drag_spinner.set_sensitive(false);
+            drag_spinner.visible = false;
+
+            var arrow_overlay = new Gtk.Overlay();
+            arrow_overlay.child = arrow_icon;
+            arrow_overlay.add_overlay(drag_spinner);
+            arrow_overlay.set_clip_overlay(drag_spinner, false);
+            drag_box.append(arrow_overlay);
 
             folder_icon = create_applications_icon();
             var folder_column = build_icon_column(folder_icon, out folder_name_label, I18n.tr("Applications"));
@@ -135,7 +134,49 @@ namespace AppManager {
             outer.append(drag_overlay);
             setup_drag_install(drag_box);
             sync_drag_ghost();
+        }
 
+        private void present_install_warning_dialog() {
+            if (install_prompt_visible) {
+                return;
+            }
+
+            var warning_icon = new Gtk.Image.from_icon_name("dialog-warning-symbolic");
+            warning_icon.set_pixel_size(64);
+            warning_icon.halign = Gtk.Align.CENTER;
+
+            var dialog = new DialogWindow(app_ref, this, I18n.tr("Open %s?").printf(resolved_app_name), warning_icon);
+
+            var warning_text = I18n.tr("Origins of %s application can not be verified. Are you sure you want to open it?").printf(resolved_app_name);
+            var warning_markup = "<b>%s</b>".printf(GLib.Markup.escape_text(warning_text, -1));
+            dialog.append_body(create_wrapped_label(warning_markup, true));
+            dialog.append_body(create_wrapped_label(I18n.tr("You can install the AppImage directly or extract it for faster opening."), false, true));
+
+            dialog.add_option("install", I18n.tr("Install"));
+            dialog.add_option("extract", I18n.tr("Extract & Install"));
+            dialog.add_option("cancel", I18n.tr("Cancel"), true);
+
+            install_prompt_visible = true;
+            dialog.close_request.connect(() => {
+                install_prompt_visible = false;
+                return false;
+            });
+
+            dialog.option_selected.connect((response) => {
+                install_prompt_visible = false;
+                switch (response) {
+                    case "install":
+                        run_installation(selected_mode(), null);
+                        break;
+                    case "extract":
+                        run_installation(InstallMode.EXTRACTED, null);
+                        break;
+                    default:
+                        break;
+                }
+            });
+
+            dialog.present();
         }
 
         private InstallationRecord? detect_existing_installation() {
@@ -187,107 +228,27 @@ namespace AppManager {
             return compare_version_strings(record.version, resolved_app_version) >= 0;
         }
 
-        private void present_install_warning_dialog() {
-            var dialog = new Adw.Dialog();
-            dialog.set_title(I18n.tr("Open %s?").printf(resolved_app_name));
-
-            var content = new Gtk.Box(Gtk.Orientation.VERTICAL, 18);
-            content.margin_top = 32;
-            content.margin_bottom = 24;
-            content.margin_start = 32;
-            content.margin_end = 32;
-
-            var warning_icon = new Gtk.Image.from_icon_name("dialog-warning-symbolic");
-            warning_icon.set_pixel_size(64);
-            warning_icon.halign = Gtk.Align.CENTER;
-            content.append(warning_icon);
-
-            var warning_text = I18n.tr("%s is not from the official app repositories. Are you sure you want to open it?").printf(resolved_app_name);
-            var body = new Gtk.Label(null);
-            body.wrap = true;
-            body.halign = Gtk.Align.CENTER;
-            body.justify = Gtk.Justification.CENTER;
-            body.use_markup = true;
-            body.set_markup("<b>%s</b>".printf(GLib.Markup.escape_text(warning_text, -1)));
-            content.append(body);
-
-            var button_column = new Gtk.Box(Gtk.Orientation.VERTICAL, 12);
-            button_column.halign = Gtk.Align.FILL;
-            button_column.hexpand = true;
-
-            var install_button = new Gtk.Button.with_label(I18n.tr("Install"));
-            install_button.hexpand = true;
-            install_button.halign = Gtk.Align.FILL;
-            button_column.append(install_button);
-
-            var extract_button = new Gtk.Button.with_label(I18n.tr("Extract & Install"));
-            extract_button.hexpand = true;
-            extract_button.halign = Gtk.Align.FILL;
-            button_column.append(extract_button);
-
-            var cancel_button = new Gtk.Button.with_label(I18n.tr("Cancel"));
-            cancel_button.hexpand = true;
-            cancel_button.halign = Gtk.Align.FILL;
-            cancel_button.add_css_class("suggested-action");
-            cancel_button.receives_default = true;
-            button_column.append(cancel_button);
-
-            content.append(button_column);
-            dialog.set_child(content);
-
-            install_prompt_visible = true;
-            dialog.closed.connect(() => {
-                install_prompt_visible = false;
-            });
-
-            cancel_button.clicked.connect(() => {
-                dialog.close();
-            });
-
-            install_button.clicked.connect(() => {
-                dialog.close();
-                run_installation(selected_mode(), null);
-            });
-
-            extract_button.clicked.connect(() => {
-                dialog.close();
-                run_installation(InstallMode.EXTRACTED, null);
-            });
-
-            dialog.set_default_widget(cancel_button);
-            dialog.present(this);
-            cancel_button.grab_focus();
-        }
-
-        private void present_upgrade_dialog(InstallationRecord record) {
-            var dialog = new Adw.AlertDialog(
-                I18n.tr("Upgrade %s?").printf(record.name),
-                I18n.tr("%s is already installed.").printf(record.name)
-            );
-            dialog.add_response("upgrade", I18n.tr("Upgrade"));
-            dialog.add_response("cancel", I18n.tr("Cancel"));
-            dialog.set_default_response("upgrade");
-            dialog.set_response_appearance("upgrade", Adw.ResponseAppearance.SUGGESTED);
-            dialog.set_close_response("cancel");
-            dialog.set_extra_child(build_upgrade_dialog_content(record));
-
-            install_prompt_visible = true;
-            dialog.response.connect((response) => {
-                install_prompt_visible = false;
-                if (response == "upgrade") {
-                    run_installation(record.mode, record);
-                }
-            });
-
-            dialog.present(this);
-        }
-
         private void notify_up_to_date(InstallationRecord record) {
             var installed_version = record.version ?? I18n.tr("Unknown version");
             var target_version = resolved_app_version ?? installed_version;
-            var title_markup = "<b>%s</b>".printf(GLib.Markup.escape_text(I18n.tr("%s is up to date").printf(record.name), -1));
+            var title = I18n.tr("%s is up to date").printf(record.name);
+            
+            var image = new Gtk.Image();
+            image.set_pixel_size(64);
+            image.halign = Gtk.Align.CENTER;
+            var record_icon = load_record_icon(record);
+            if (record_icon != null) {
+                image.set_from_paintable(record_icon);
+            } else {
+                image.set_from_icon_name("application-x-executable");
+            }
+
+            var dialog = new DialogWindow(app_ref, this, title, image);
+            
             var body_markup = GLib.Markup.escape_text(I18n.tr("Installed version %s is newer or the same as %s.").printf(installed_version, target_version), -1);
-            show_version_banner("%s\n%s".printf(title_markup, body_markup));
+            dialog.append_body(create_wrapped_label(body_markup, true));
+            dialog.add_option("close", I18n.tr("Close"));
+            dialog.present();
         }
 
         private int compare_version_strings(string installed, string candidate) {
@@ -366,29 +327,14 @@ namespace AppManager {
             }
         }
 
-        private void show_version_banner(string markup) {
-            if (version_banner == null) {
-                return;
-            }
-            if (version_banner_timeout_id != 0) {
-                GLib.Source.remove(version_banner_timeout_id);
-                version_banner_timeout_id = 0;
-            }
-            version_banner.set_title(markup);
-            version_banner.set_revealed(true);
-            version_banner_timeout_id = GLib.Timeout.add(5000, () => {
-                version_banner.set_revealed(false);
-                version_banner_timeout_id = 0;
-                return GLib.Source.REMOVE;
-            });
-        }
-
         private Gtk.Widget build_upgrade_dialog_content(InstallationRecord record) {
             var column = new Gtk.Box(Gtk.Orientation.VERTICAL, 10);
             column.margin_top = 16;
             column.margin_bottom = 8;
             column.margin_start = 12;
             column.margin_end = 12;
+            column.halign = Gtk.Align.FILL;
+            column.hexpand = true;
 
             var image = new Gtk.Image();
             image.set_pixel_size(64);
@@ -425,6 +371,60 @@ namespace AppManager {
             return column;
         }
 
+        private void present_upgrade_dialog(InstallationRecord record) {
+            if (install_prompt_visible) {
+                return;
+            }
+
+            var image = new Gtk.Image();
+            image.set_pixel_size(64);
+            image.halign = Gtk.Align.CENTER;
+            var record_icon = load_record_icon(record);
+            if (record_icon != null) {
+                image.set_from_paintable(record_icon);
+            } else {
+                image.set_from_icon_name("application-x-executable");
+            }
+
+            var dialog = new DialogWindow(app_ref, this, I18n.tr("Upgrade %s?").printf(record.name), image);
+            dialog.append_body(build_upgrade_dialog_content(record));
+            dialog.add_option("upgrade", I18n.tr("Upgrade"));
+            dialog.add_option("cancel", I18n.tr("Cancel"));
+
+            install_prompt_visible = true;
+            dialog.close_request.connect(() => {
+                install_prompt_visible = false;
+                return false;
+            });
+
+            dialog.option_selected.connect((response) => {
+                install_prompt_visible = false;
+                if (response == "upgrade") {
+                    run_installation(record.mode, record);
+                }
+            });
+
+            dialog.present();
+        }
+
+        private Gtk.Label create_wrapped_label(string text, bool use_markup = false, bool dim = false) {
+            var label = new Gtk.Label(null);
+            label.wrap = true;
+            label.set_wrap_mode(Pango.WrapMode.WORD_CHAR);
+            label.halign = Gtk.Align.CENTER;
+            label.justify = Gtk.Justification.CENTER;
+            label.use_markup = use_markup;
+            if (use_markup) {
+                label.set_markup(text);
+            } else {
+                label.set_text(text);
+            }
+            if (dim) {
+                label.add_css_class("dim-label");
+            }
+            return label;
+        }
+
         private Gdk.Paintable? load_record_icon(InstallationRecord record) {
             if (record.icon_path == null || record.icon_path.strip() == "") {
                 return null;
@@ -445,6 +445,7 @@ namespace AppManager {
                 return;
             }
             installing = true;
+            set_drag_spinner_install_active(true);
 
             string staged_path;
             string staged_dir;
@@ -478,35 +479,85 @@ namespace AppManager {
 
         private void handle_install_success(InstallationRecord record, bool upgraded, string? staging_dir) {
             installing = false;
+            set_drag_spinner_install_active(false);
             cleanup_staging_dir(staging_dir);
             remove_source_appimage();
             var title = upgraded ? I18n.tr("Upgraded %s").printf(record.name) : I18n.tr("Installed %s").printf(record.name);
+            
+            var image = new Gtk.Image();
+            image.set_pixel_size(64);
+            image.halign = Gtk.Align.CENTER;
+            var record_icon = load_record_icon(record);
+            if (record_icon != null) {
+                image.set_from_paintable(record_icon);
+            } else {
+                image.set_from_icon_name("application-x-executable");
+            }
+
+            var dialog = new DialogWindow(app_ref, this, title, image);
             var version_text = record.version ?? I18n.tr("Unknown version");
-            send_install_notification(title, I18n.tr("Version %s available in Applications").printf(version_text));
-            this.close();
+            var body_markup = GLib.Markup.escape_text(I18n.tr("Version %s").printf(version_text), -1);
+            dialog.append_body(create_wrapped_label(body_markup, true));
+            dialog.add_option("done", I18n.tr("Done"));
+            dialog.option_selected.connect((response) => {
+                this.close();
+            });
+            dialog.present();
         }
 
         private void handle_install_failure(string message, string? staging_dir = null) {
             installing = false;
+            set_drag_spinner_install_active(false);
             cleanup_staging_dir(staging_dir);
-            send_install_notification(I18n.tr("Installation failed"), message, GLib.NotificationPriority.HIGH);
+            var title = I18n.tr("Installation failed");
+            
+            var error_icon = new Gtk.Image.from_icon_name("dialog-error-symbolic");
+            error_icon.set_pixel_size(64);
+            error_icon.halign = Gtk.Align.CENTER;
+
+            var dialog = new DialogWindow(app_ref, this, title, error_icon);
+            
+            var body_markup = GLib.Markup.escape_text(message, -1);
+            dialog.append_body(create_wrapped_label(body_markup, true));
+            dialog.add_option("dismiss", I18n.tr("Dismiss"));
+            dialog.present();
         }
 
-        private void send_install_notification(string title, string body, GLib.NotificationPriority priority = GLib.NotificationPriority.NORMAL) {
-            if (app_ref == null) {
+        private void set_drag_spinner_icon_active(bool active) {
+            if (spinner_icon_active == active) {
                 return;
             }
-            var notification = new GLib.Notification(title);
-            if (body != null && body.strip() != "") {
-                notification.set_body(body);
+            spinner_icon_active = active;
+            update_drag_spinner_state();
+        }
+
+        private void set_drag_spinner_install_active(bool active) {
+            if (spinner_install_active == active) {
+                return;
             }
-            notification.set_priority(priority);
-            var timestamp = GLib.get_real_time();
-            var notification_id = "drop-window-" + timestamp.to_string();
-            app_ref.send_notification(notification_id, notification);
+            spinner_install_active = active;
+            if (drag_box != null) {
+                drag_box.set_sensitive(!active);
+            }
+            update_drag_spinner_state();
+        }
+
+        private void update_drag_spinner_state() {
+            if (drag_spinner == null || arrow_icon == null) {
+                return;
+            }
+            var active = spinner_icon_active || spinner_install_active;
+            drag_spinner.visible = active;
+            arrow_icon.visible = !active;
+            if (active) {
+                drag_spinner.start();
+            } else {
+                drag_spinner.stop();
+            }
         }
 
         private void load_icons_async() {
+            set_drag_spinner_icon_active(true);
             new Thread<void>("appmgr-icon", () => {
                 try {
                     var texture = extract_icon_from_appimage(appimage_path);
@@ -514,17 +565,23 @@ namespace AppManager {
                         Idle.add(() => {
                             app_icon.set_from_paintable(texture);
                             sync_drag_ghost();
+                            set_drag_spinner_icon_active(false);
                             return GLib.Source.REMOVE;
                         });
                     } else {
                         Idle.add(() => {
                             app_icon.set_from_icon_name("application-x-executable");
                             sync_drag_ghost();
+                            set_drag_spinner_icon_active(false);
                             return GLib.Source.REMOVE;
                         });
                     }
                 } catch (Error e) {
                     warning("Icon preview failed: %s", e.message);
+                    Idle.add(() => {
+                        set_drag_spinner_icon_active(false);
+                        return GLib.Source.REMOVE;
+                    });
                 }
             });
         }
@@ -860,11 +917,11 @@ namespace AppManager {
             }
         }
 
-        private Gtk.Box build_icon_column(Gtk.Image image, out Gtk.Label label, string text, bool emphasize = false) {
+        private Gtk.Box build_icon_column(Gtk.Widget icon_widget, out Gtk.Label label, string text, bool emphasize = false) {
             var column = new Gtk.Box(Gtk.Orientation.VERTICAL, 6);
             column.halign = Gtk.Align.CENTER;
             column.valign = Gtk.Align.CENTER;
-            column.append(image);
+            column.append(icon_widget);
 
             label = new Gtk.Label(text);
             label.halign = Gtk.Align.CENTER;

@@ -1,6 +1,7 @@
 app_sources = files(
   'main.vala',
   'application.vala',
+  'windows/dialog_window.vala',
   'windows/main_window.vala',
   'windows/drop_window.vala'
 )
