@@ -28,6 +28,7 @@ namespace AppManager {
         private InstallMode install_mode = InstallMode.PORTABLE;
         private string resolved_app_name;
         private string? resolved_app_version = null;
+        private bool is_terminal_app = false;
         private const double DRAG_VISUAL_RANGE = 240.0;
         private bool spinner_icon_active = false;
         private bool spinner_install_active = false;
@@ -168,10 +169,17 @@ namespace AppManager {
             var warning_text = I18n.tr("Origins of %s application can not be verified. Are you sure you want to open it?").printf(resolved_app_name);
             var warning_markup = "<b>%s</b>".printf(GLib.Markup.escape_text(warning_text, -1));
             dialog.append_body(create_wrapped_label(warning_markup, true));
-            dialog.append_body(create_wrapped_label(I18n.tr("You can install the AppImage directly or extract it for faster opening."), false, true));
+            
+            if (is_terminal_app) {
+                dialog.append_body(create_wrapped_label(I18n.tr("This is a terminal application and will be installed in portable mode."), false, true));
+            } else {
+                dialog.append_body(create_wrapped_label(I18n.tr("You can install the AppImage directly or extract it for faster opening."), false, true));
+            }
 
             dialog.add_option("install", I18n.tr("Install"));
-            dialog.add_option("extract", I18n.tr("Extract & Install"));
+            if (!is_terminal_app) {
+                dialog.add_option("extract", I18n.tr("Extract & Install"));
+            }
             dialog.add_option("cancel", I18n.tr("Cancel"), true);
 
             install_prompt_visible = true;
@@ -721,6 +729,7 @@ namespace AppManager {
         private string extract_app_name() {
             var resolved = metadata.display_name;
             resolved_app_version = null;
+            is_terminal_app = false;
             string temp_dir;
             try {
                 temp_dir = Utils.FileUtils.create_temp_dir("appmgr-name-");
@@ -743,6 +752,9 @@ namespace AppManager {
                             if (candidate.length > 0) {
                                 resolved_app_version = candidate;
                             }
+                        }
+                        if (key_file.has_key("Desktop Entry", "Terminal")) {
+                            is_terminal_app = key_file.get_boolean("Desktop Entry", "Terminal");
                         }
                     }
                 }

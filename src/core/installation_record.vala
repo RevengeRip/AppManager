@@ -13,6 +13,7 @@ namespace AppManager.Core {
         public string installed_path { get; set; }
         public string desktop_file { get; set; }
         public string? icon_path { get; set; }
+        public string? bin_symlink { get; set; }
         public int64 installed_at { get; set; }
         public string? version { get; set; }
 
@@ -39,6 +40,8 @@ namespace AppManager.Core {
             builder.add_string_value(desktop_file);
             builder.set_member_name("icon_path");
             builder.add_string_value(icon_path ?? "");
+            builder.set_member_name("bin_symlink");
+            builder.add_string_value(bin_symlink ?? "");
             builder.set_member_name("installed_at");
             builder.add_int_value(installed_at);
             builder.set_member_name("version");
@@ -58,6 +61,8 @@ namespace AppManager.Core {
             record.desktop_file = obj.get_string_member("desktop_file");
             var icon = obj.get_string_member_with_default("icon_path", "");
             record.icon_path = icon == "" ? null : icon;
+            var bin = obj.get_string_member_with_default("bin_symlink", "");
+            record.bin_symlink = bin == "" ? null : bin;
             record.installed_at = (int64)obj.get_int_member("installed_at");
             var version = obj.get_string_member_with_default("version", "");
             record.version = version == "" ? null : version;

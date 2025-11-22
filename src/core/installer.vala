@@ -106,6 +106,7 @@ namespace AppManager.Core {
                 var icon_path = find_icon(temp_dir);
                 string desktop_name = metadata.display_name;
                 string? desktop_version = null;
+                bool is_terminal_app = false;
                 try {
                     var key_file = new KeyFile();
                     key_file.load_from_file(desktop_path, KeyFileFlags.NONE);
@@ -117,6 +118,9 @@ namespace AppManager.Core {
                         if (parsed_version.length > 0) {
                             desktop_version = parsed_version;
                         }
+                    }
+                    if (key_file.has_key("Desktop Entry", "Terminal")) {
+                        is_terminal_app = key_file.get_boolean("Desktop Entry", "Terminal");
                     }
                 } catch (Error e) {
                     warning("Failed to parse desktop metadata: %s", e.message);
@@ -160,7 +164,7 @@ namespace AppManager.Core {
                         icon_for_desktop = stored_icon;
                     }
                 }
-                var desktop_contents = rewrite_desktop(desktop_path, exec_path, icon_for_desktop, record.installed_path);
+                var desktop_contents = rewrite_desktop(desktop_path, exec_path, icon_for_desktop, record.installed_path, is_terminal_app);
                 var desktop_filename = "%s-%s.desktop".printf("appmanager", final_slug);
                 var desktop_destination = Path.build_filename(AppPaths.desktop_dir, desktop_filename);
                 Utils.FileUtils.ensure_parent(desktop_destination);
@@ -169,6 +173,12 @@ namespace AppManager.Core {
                 }
                 record.desktop_file = desktop_destination;
                 record.icon_path = stored_icon;
+
+                // Create symlink for terminal applications
+                if (is_terminal_app) {
+                    progress("Creating symlink for terminal application…");
+                    record.bin_symlink = create_bin_symlink(exec_path, final_slug);
+                }
             } finally {
                 if (settings.get_boolean("auto-clean-temp")) {
                     Utils.FileUtils.remove_dir_recursive(temp_dir);
@@ -196,6 +206,9 @@ namespace AppManager.Core {
                 if (record.icon_path != null && File.new_for_path(record.icon_path).query_exists()) {
                     File.new_for_path(record.icon_path).delete(null);
                 }
+                if (record.bin_symlink != null && File.new_for_path(record.bin_symlink).query_exists()) {
+                    File.new_for_path(record.bin_symlink).delete(null);
+                }
                 registry.unregister(record.id);
             } catch (Error e) {
                 throw new InstallerError.UNINSTALL_FAILED(e.message);
@@ -219,6 +232,9 @@ namespace AppManager.Core {
                 }
                 if (record.icon_path != null && File.new_for_path(record.icon_path).query_exists()) {
                     File.new_for_path(record.icon_path).delete(null);
+                }
+                if (record.bin_symlink != null && File.new_for_path(record.bin_symlink).query_exists()) {
+                    File.new_for_path(record.bin_symlink).delete(null);
                 }
             } catch (Error e) {
                 warning("Failed to cleanup after installation error: %s", e.message);
@@ -273,7 +289,7 @@ namespace AppManager.Core {
             return candidate;
         }
 
-        private string rewrite_desktop(string desktop_path, string exec_target, string icon_target, string installed_path) throws Error {
+        private string rewrite_desktop(string desktop_path, string exec_target, string icon_target, string installed_path, bool is_terminal) throws Error {
             string contents;
             if (!GLib.FileUtils.get_contents(desktop_path, out contents)) {
                 throw new InstallerError.DESKTOP_MISSING("Failed to read desktop file");
@@ -282,6 +298,7 @@ namespace AppManager.Core {
             bool actions_line_found = false;
             bool uninstall_listed = false;
             bool skipping_uninstall_block = false;
+            bool no_display_found = false;
             foreach (var line in contents.split("\n")) {
                 var trimmed = line.strip();
                 if (skipping_uninstall_block) {
@@ -300,6 +317,13 @@ namespace AppManager.Core {
                     output.append("Exec=%s\n".printf(exec_target));
                 } else if (trimmed.has_prefix("Icon=") && icon_target != "") {
                     output.append("Icon=%s\n".printf(icon_target));
+                } else if (trimmed.has_prefix("NoDisplay=")) {
+                    no_display_found = true;
+                    if (is_terminal) {
+                        output.append("NoDisplay=true\n");
+                    } else {
+                        output.append(line + "\n");
+                    }
                 } else if (trimmed.has_prefix("Actions=")) {
                     actions_line_found = true;
                     var value = trimmed.substring("Actions=".length);
@@ -328,6 +352,9 @@ namespace AppManager.Core {
 
             if (!actions_line_found) {
                 output.append("Actions=Uninstall;\n");
+            }
+            if (is_terminal && !no_display_found) {
+                output.append("NoDisplay=true\n");
             }
 
             var uninstall_exec = build_uninstall_exec(installed_path);
@@ -512,6 +539,29 @@ namespace AppManager.Core {
                 warning("7z stdout: %s", stdout_str ?? "");
                 warning("7z stderr: %s", stderr_str ?? "");
                 throw new InstallerError.EXTRACTION_FAILED("7z failed to extract payload");
+            }
+        }
+
+        private string? create_bin_symlink(string exec_path, string slug) {
+            try {
+                var bin_dir = Path.build_filename(Environment.get_home_dir(), ".local", "bin");
+                DirUtils.create_with_parents(bin_dir, 0755);
+                
+                var symlink_path = Path.build_filename(bin_dir, slug);
+                var symlink_file = File.new_for_path(symlink_path);
+                
+                // Remove existing symlink if it exists
+                if (symlink_file.query_exists()) {
+                    symlink_file.delete(null);
+                }
+                
+                // Create symlink
+                symlink_file.make_symbolic_link(exec_path, null);
+                debug("Created symlink: %s -> %s", symlink_path, exec_path);
+                return symlink_path;
+            } catch (Error e) {
+                warning("Failed to create symlink for %s: %s", slug, e.message);
+                return null;
             }
         }
 
