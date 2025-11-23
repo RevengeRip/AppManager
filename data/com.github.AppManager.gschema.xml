@@ -13,11 +13,6 @@
       <summary>Automatically clean temporary extraction folders</summary>
       <description>When enabled AppManager removes temporary directories immediately after finishing extraction.</description>
     </key>
-    <key name="use-system-icons" type="b">
-      <default>false</default>
-      <summary>Prefer system icon theme entries</summary>
-      <description>If enabled, AppManager strips absolute icon file paths in generated desktop files and references icon names instead.</description>
-    </key>
     <key name="remember-drop-window-position" type="b">
       <default>true</default>
       <summary>Remember the drag-and-drop window position</summary>

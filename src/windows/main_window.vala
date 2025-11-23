@@ -76,15 +76,6 @@ namespace AppManager {
             });
             install_group.add(cleanup_row);
 
-            var system_icons_row = new Adw.SwitchRow();
-            system_icons_row.title = I18n.tr("Use system icon theme");
-            system_icons_row.subtitle = I18n.tr("Reference icons by name instead of absolute paths");
-            system_icons_row.active = settings.get_boolean("use-system-icons");
-            system_icons_row.notify["active"].connect(() => {
-                settings.set_boolean("use-system-icons", system_icons_row.active);
-            });
-            install_group.add(system_icons_row);
-
             installs_group = new Adw.PreferencesGroup();
             installs_group.title = I18n.tr("Installed AppImages");
             general_page.add(installs_group);

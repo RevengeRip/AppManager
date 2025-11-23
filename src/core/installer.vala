@@ -164,21 +164,47 @@ namespace AppManager.Core {
                 }
 
                 var final_slug = derive_slug_from_path(record.installed_path, record.mode == InstallMode.EXTRACTED);
-                string stored_icon;
-                string icon_for_desktop;
-                if (settings.get_boolean("use-system-icons")) {
-                    var base_name = Path.get_basename(icon_path);
-                    var dot_index = base_name.last_index_of_char('.');
-                    var extension = dot_index >= 0 ? base_name.substring(dot_index) : ".png";
-                    stored_icon = Path.build_filename(AppPaths.icons_dir, "%s%s".printf(final_slug, extension));
-                    Utils.FileUtils.file_copy(icon_path, stored_icon);
-                    icon_for_desktop = final_slug;
-                } else {
-                    stored_icon = Path.build_filename(AppPaths.data_dir, "%s-%s".printf(final_slug, Path.get_basename(icon_path)));
-                    Utils.FileUtils.file_copy(icon_path, stored_icon);
-                    icon_for_desktop = stored_icon;
+                
+                // Extract original Icon name from desktop file
+                string? original_icon_name = null;
+                try {
+                    var key_file = new KeyFile();
+                    key_file.load_from_file(desktop_path, KeyFileFlags.NONE);
+                    if (key_file.has_key("Desktop Entry", "Icon")) {
+                        original_icon_name = key_file.get_string("Desktop Entry", "Icon");
+                    }
+                } catch (Error e) {
+                    warning("Failed to read original icon name: %s", e.message);
                 }
-                var desktop_contents = rewrite_desktop(desktop_path, exec_path, icon_for_desktop, record.installed_path, is_terminal_app);
+                
+                // Derive icon name without path and extension
+                string icon_name_for_desktop;
+                if (original_icon_name != null && original_icon_name != "") {
+                    // Strip path if present
+                    var icon_basename = Path.get_basename(original_icon_name);
+                    // Strip extension
+                    var dot_index = icon_basename.last_index_of_char('.');
+                    if (dot_index > 0) {
+                        icon_name_for_desktop = icon_basename.substring(0, dot_index);
+                    } else {
+                        icon_name_for_desktop = icon_basename;
+                    }
+                } else {
+                    // Fallback to slug if no icon name in desktop file
+                    icon_name_for_desktop = final_slug;
+                }
+                
+                // Install icon to ~/.local/share/icons with extension
+                var icon_file_basename = Path.get_basename(icon_path);
+                var icon_extension = "";
+                var ext_index = icon_file_basename.last_index_of_char('.');
+                if (ext_index >= 0) {
+                    icon_extension = icon_file_basename.substring(ext_index);
+                }
+                var stored_icon = Path.build_filename(AppPaths.icons_dir, "%s%s".printf(icon_name_for_desktop, icon_extension));
+                Utils.FileUtils.file_copy(icon_path, stored_icon);
+                
+                var desktop_contents = rewrite_desktop(desktop_path, exec_path, icon_name_for_desktop, record.installed_path, is_terminal_app);
                 var desktop_filename = "%s-%s.desktop".printf("appmanager", final_slug);
                 var desktop_destination = Path.build_filename(AppPaths.desktop_dir, desktop_filename);
                 Utils.FileUtils.ensure_parent(desktop_destination);
@@ -255,7 +281,7 @@ namespace AppManager.Core {
             }
         }
 
-        private string rewrite_desktop(string desktop_path, string exec_target, string icon_target, string installed_path, bool is_terminal) throws Error {
+        private string rewrite_desktop(string desktop_path, string exec_target, string icon_name, string installed_path, bool is_terminal) throws Error {
             string contents;
             if (!GLib.FileUtils.get_contents(desktop_path, out contents)) {
                 throw new InstallerError.DESKTOP_MISSING("Failed to read desktop file");
@@ -264,6 +290,7 @@ namespace AppManager.Core {
             var output_lines = new Gee.ArrayList<string>();
             bool actions_handled = false;
             bool no_display_handled = false;
+            bool startup_wm_class_handled = false;
             bool skipping_uninstall_block = false;
             bool in_desktop_entry = false;
 
@@ -301,7 +328,14 @@ namespace AppManager.Core {
 
                 // Replace Icon in Desktop Entry section
                 if (trimmed.has_prefix("Icon=")) {
-                    output_lines.add("Icon=%s".printf(icon_target));
+                    output_lines.add("Icon=%s".printf(icon_name));
+                    continue;
+                }
+
+                // Handle StartupWMClass
+                if (trimmed.has_prefix("StartupWMClass=")) {
+                    startup_wm_class_handled = true;
+                    output_lines.add(line);
                     continue;
                 }
 
@@ -373,6 +407,26 @@ namespace AppManager.Core {
                     output_lines.insert(insert_pos, "NoDisplay=true");
                 } else {
                     output_lines.add("NoDisplay=true");
+                }
+            }
+
+            // Add StartupWMClass if not present
+            if (!startup_wm_class_handled) {
+                int insert_pos = -1;
+                for (int i = 0; i < output_lines.size; i++) {
+                    var line = output_lines[i].strip();
+                    if (line == "[Desktop Entry]") {
+                        insert_pos = i + 1;
+                    } else if (insert_pos > 0 && line.has_prefix("[") && line.has_suffix("]")) {
+                        break;
+                    } else if (insert_pos > 0) {
+                        insert_pos = i + 1;
+                    }
+                }
+                if (insert_pos > 0) {
+                    output_lines.insert(insert_pos, "StartupWMClass=%s".printf(icon_name));
+                } else {
+                    output_lines.add("StartupWMClass=%s".printf(icon_name));
                 }
             }
 
