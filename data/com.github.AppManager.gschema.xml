@@ -1,18 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <schemalist>
   <schema id="com.github.AppManager" path="/com/github/AppManager/">
-    <key name="default-install-mode" type="s">
-      <default>'portable'</default>
-      <summary>Preferred installation mode</summary>
-      <description>
-        Controls how AppManager installs AppImages when the user does not explicitly override the mode. The values are “portable” or “extracted”.
-      </description>
-    </key>
-    <key name="auto-clean-temp" type="b">
-      <default>true</default>
-      <summary>Automatically clean temporary extraction folders</summary>
-      <description>When enabled AppManager removes temporary directories immediately after finishing extraction.</description>
-    </key>
     <key name="remember-drop-window-position" type="b">
       <default>true</default>
       <summary>Remember the drag-and-drop window position</summary>

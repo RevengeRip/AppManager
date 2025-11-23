@@ -2,133 +2,70 @@
 
 You are an expert Vala/GTK developer working on AppManager, a Libadwaita utility for managing AppImages on GNOME.
 
-## Project Architecture
+## Architecture & Key Modules
+- **Shared core (`src/core/`)**: Compiled into both the main application and the Nautilus extension. Changes here affect UI and extension simultaneously.
+- **Entry points**:
+   - `src/application.vala` / `src/main.vala`: Wire up `Adw.Application`, parse CLI flags (`--install`, `--uninstall`, `--is-installed`), decide between `DropWindow` and `MainWindow`.
+   - `extensions/nautilus_extension.vala`: Nautilus context menus for `.AppImage` files; shells out to the main binary via the same CLI flags.
+- **Core modules**:
+   - `installer.vala`: Orchestrates install/uninstall, including move vs extract, 7z calls, `.desktop` rewrite, icon installation, and optional terminal symlink creation.
+   - `installation_registry.vala`: JSON registry at `~/.local/share/app-manager/installations.json`. This is the single source of truth for install state—prefer it over raw filesystem checks.
+   - `installation_record.vala`: Defines `InstallMode` enum (`PORTABLE`, `EXTRACTED`) and record (de)serialization helpers.
+   - `app_image_metadata.vala`: Lightweight AppImage inspection (SHA256 checksum, display name, executability, basename helpers).
+   - `app_image_assets.vala`: 7z-based helpers for extracting `.desktop` and icon assets into temp directories.
+   - `app_paths.vala` / `app_constants.vala`: Centralized path and ID definitions (applications dir, extracted root, icons dir, desktop dir, registry file, application ID, MIME type).
+   - `utils/file_utils.vala`: SHA256 checksums, unique path generation, recursive directory removal, temp dir creation, file copy utilities.
+- **UI layer (`src/windows/`)**:
+   - `drop_window.vala`: macOS-style drag-and-drop installer; allows choosing install mode, checks for upgrades via the registry, and calls `Installer`.
+   - `main_window.vala`: Installed apps list backed by `InstallationRegistry`.
+   - `dialog_window.vala`: Shared dialog patterns for confirmations and warnings.
 
-### Core Shared Library (`src/core/`)
-**CRITICAL**: All files in `src/core/` are compiled into BOTH the main application AND the Nautilus extension. Any changes here impact both components simultaneously.
+## Installation & Desktop Integration Flows
+- **Install modes** (`InstallMode` in `installation_record.vala`, logic in `installer.vala`):
+   - `PORTABLE`: Copy AppImage into `AppPaths.applications_dir`, ensure executable, and call `finalize_desktop_and_icon()` with the `.AppImage` as both exec target and asset source.
+   - `EXTRACTED`: Extract AppImage into `AppPaths.extracted_root` using `run_appimage_extract()`, move `squashfs-root` into a unique directory, copy the AppImage alongside, and point `Exec` to `AppRun` if present (fallback to the AppImage itself).
+- **Registry lifecycle** (`InstallationRegistry`):
+   1. `AppImageMetadata` computes a checksum; installer checks `registry.is_installed_checksum()` / `lookup_by_source()` before installing.
+   2. On success, `registry.register(record)` persists JSON and emits `changed()` (UI listens to refresh views).
+   3. `Installer.uninstall()` removes files/dirs, desktop entry, icon, and optional bin symlink, then calls `registry.unregister(record.id)`.
+- **Desktop entry + icon handling** (`Installer.finalize_desktop_and_icon()` + `AppImageAssets`):
+   - Extract `.desktop` and icons via `AppImageAssets.extract_desktop_entry()` / `extract_icon()` into a temp dir from `Utils.FileUtils.create_temp_dir()`.
+   - Parse `Name`, `X-AppImage-Version`, `Terminal`, and `Icon` using `KeyFile` and save into the `InstallationRecord`.
+   - Normalize a slug with `slugify_app_name()` and `derive_slug_from_path()`, possibly renaming the install path via `ensure_install_name()`.
+   - Strip path + extension from the original `Icon` key to derive an icon name; store the icon file under `AppPaths.icons_dir` with that name + extension, and use only the bare icon name in the rewritten desktop file.
+   - Generate `appmanager-<slug>.desktop` in `AppPaths.desktop_dir`, populated by `rewrite_desktop()`; update `record.desktop_file`, `record.icon_path`, and (for terminal apps) `record.bin_symlink` from `create_bin_symlink()`.
+   - Temp extraction directories are automatically cleaned after installation completes.
 
-- `installer.vala`: The heart of the application—handles moving/extracting AppImages, rewriting `.desktop` files, extracting icons via `7z`, and cleanup.
-- `installation_registry.vala`: Manages the JSON database at `~/.local/share/app-manager/installations.json`. The single source of truth for what's installed. Never bypass it for file existence checks.
-- `app_image_metadata.vala`: Lightweight inspection—computes SHA256 checksums, derives display names, checks executability.
-- `installation_record.vala`: Defines `InstallMode` enum (`PORTABLE`, `EXTRACTED`) and record serialization/deserialization.
-- `app_paths.vala`: Centralized path resolution for `~/Applications`, `~/.local/share/app-manager`, desktop entries, and icons.
-- `app_constants.vala`: Application ID, MIME type, directory names.
-- `file_utils.vala`: SHA256 checksums, unique path generation, recursive directory removal, temp dir creation.
+## Conventions & Patterns
+- **Language/stack**: Vala targeting GLib 2.74+, GTK4, Libadwaita. Use 4-space indentation and existing namespaces (`AppManager`, `AppManager.Core`, `AppManager.Utils`).
+- **Error handling**:
+   - Prefer `InstallerError` for install/uninstall failures: `ALREADY_INSTALLED`, `DESKTOP_MISSING`, `EXTRACTION_FAILED`, `SEVEN_ZIP_MISSING`, `UNINSTALL_FAILED`, `UNKNOWN`.
+   - Wrap file I/O, JSON parsing, and subprocess spawning (`7z`, AppImage tools) in `try/catch (Error e)`; log via `warning()`, `debug()`, or `critical()`.
+- **Temp dirs & cleanup**: Use `Utils.FileUtils.create_temp_dir()` and `DirUtils.mkdtemp()` with prefixes derived from `AppPaths`; temp directories are always auto-deleted after installation.
+- **Registry vs filesystem**: For "is installed?" decisions, always consult `InstallationRegistry` (`is_installed_checksum`, `lookup_by_source`, `lookup_by_installed_path`) rather than relying solely on `File.query_exists()`.
+- **Nautilus extension**: Links against `core_sources` (see `extensions/meson.build`) and uses the same CLI contract (`--install`, `--uninstall`, `--is-installed`). Any change in registry/CLI behavior must preserve extension compatibility.
 
-### UI Layer (`src/windows/`)
-- `drop_window.vala`: macOS-style drag-and-drop installer with animated icon transitions. Programmatically built UI (no `.ui` templates).
-- `main_window.vala`: Preferences and installed apps list viewer.
-- `dialog_window.vala`: Reusable dialog patterns.
-
-### File Manager Integration (`extensions/`)
-- `nautilus_extension.vala`: Right-click context menus for `.appimage` files. Queries registry to show "Install AppImage" or "Move to Trash". Spawns main app via CLI (`--install`, `--uninstall`).
-- Compiled as `libnautilus-app-manager.so` into `/usr/lib/nautilus/extensions-4/`.
-
-### Data Persistence
-- **Registry**: `~/.local/share/app-manager/installations.json` (JSON array of `InstallationRecord` objects).
-- **Settings**: `data/com.github.AppManager.gschema.xml` (GSettings keys: `default-install-mode`, `auto-clean-temp`, `use-system-icons`).
-
-## Build & Development
-
-```bash
-# Setup
-meson setup build
-meson compile -C build
-
-# Run (from project root)
-./build/src/app-manager
-
-# Install locally (for testing Nautilus extension)
-meson install -C build --destdir "$HOME/.local"
-# Then: killall nautilus && nautilus &
-
-# CLI modes
-./build/src/app-manager --install /path/to/app.AppImage
-./build/src/app-manager --uninstall /path/or/checksum
-./build/src/app-manager --is-installed /path/to/app.AppImage
-```
-
-**Dependencies**: `libadwaita-1 (>=1.4)`, `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libnautilus-extension-4` (optional).  
-**Runtime Requirement**: `7z` (p7zip) is MANDATORY—used to extract `.desktop` files, icons, and AppImage contents.
-
-## Key Patterns & Workflows
-
-### Installation Modes
-- **`PORTABLE`**: Moves AppImage to `~/Applications`, marks executable, unpacks `.desktop`+icon via `7z`, rewrites `Exec` to point at moved `.AppImage`.
-- **`EXTRACTED`**: Fully unpacks AppImage to `~/Applications/.installed/<slug>/`, rewrites `.desktop` `Exec` to point at `AppRun` inside extracted tree.
-- Default mode controlled by `default-install-mode` GSettings key ("portable" or "extracted").
-- When modifying installation logic, ALWAYS handle both paths in `installer.vala` (see `install_portable()` and `install_extracted()`).
-
-### Registry Lifecycle
-1. `AppImageMetadata` computes SHA256 checksum on file open.
-2. `Installer.install()` checks `registry.is_installed_checksum()` to prevent duplicates.
-3. After successful install, `registry.register(record)` saves to JSON and emits `changed()` signal.
-4. Uninstall deletes files, desktop entry, icon, then calls `registry.unregister(id)`.
-
-### Desktop Integration Flow
-1. Extract AppImage to temp dir (`/tmp/appmgr-XXXXXX`) with `run_7z()`.
-2. Recursively search for `*.desktop` file (`find_desktop_entry()`).
-3. Parse for `Name` and `X-AppImage-Version` keys.
-4. Extract icon (`*.png`, `*.svg`), preferring 256x256 or 512x512 sizes.
-5. Rewrite `.desktop` file:
-   - Replace `Exec=AppRun` with absolute path to installed executable.
-   - Replace `Icon=` with either system icon name (if `use-system-icons=true`) or absolute path.
-   - Inject `[Desktop Action Uninstall]` with custom uninstall command.
-6. Save rewritten `.desktop` to `~/.local/share/applications/appmanager-<slug>.desktop`.
-7. Clean temp dir if `auto-clean-temp=true`.
-
-### 7z Extraction Pattern
-All `7z` calls use `Process.spawn_sync()` in `Installer.run_7z()` and `DropWindow.run_7z()`:
-```vala
-run_7z({"x", source_path, "-o" + dest_dir, "-y"});  // Extract all
-run_7z({"x", source_path, "-o" + dest_dir, "*.desktop", "-r", "-y"});  // Extract .desktop only
-```
-If `7z` returns non-zero, throw `InstallerError.EXTRACTION_FAILED` or `SEVEN_ZIP_MISSING`.
-
-### Error Handling
-- Use `try/catch` blocks with GLib `Error` for all file I/O, JSON parsing, and subprocess spawning.
-- Custom errordomain: `InstallerError` (in `installer.vala`): `ALREADY_INSTALLED`, `DESKTOP_MISSING`, `EXTRACTION_FAILED`, `SEVEN_ZIP_MISSING`, `UNINSTALL_FAILED`.
-- Log with `warning()`, `debug()`, or `critical()` (GLib logging).
-
-### Nautilus Extension Integration
-- Extension links against `core_sources` directly (see `extensions/meson.build`).
-- On right-click, computes file checksum and queries `InstallationRegistry`.
-- Spawns main app asynchronously: `Process.spawn_async(null, ["app-manager", "--install", path], ...)`.
-- No direct UI—all operations delegated to main application.
-
-## Code Style & Conventions
-
-- **Language**: Vala (target GLib 2.74, specified in `meson.build`).
-- **Indentation**: 4 spaces, no tabs.
-- **Namespaces**: `AppManager`, `AppManager.Core`, `AppManager.Utils`.
-- **Object Construction**: Use GObject-style construction: `Object(property: value, ...)`.
-- **UI Construction**: Programmatic (no `.ui` templates)—build widget trees in constructors.
-- **Logging**: Use `debug()`, `warning()`, `critical()` instead of `print()` or `stdout`.
-- **Paths**: Always use `Path.build_filename()` for cross-platform safety.
-
-## Common Pitfalls
-
-1. **Forgetting dual compilation**: Changes to `src/core/` require rebuilding BOTH `app-manager` and `libnautilus-app-manager.so`. Test Nautilus integration after core changes.
-2. **Bypassing registry**: Don't check file existence directly—always query `InstallationRegistry` to determine install status.
-3. **Missing `7z` checks**: If `7z` is unavailable, extraction silently fails. `run_7z()` throws errors, but catch and inform user.
-4. **Temp cleanup**: If `auto-clean-temp=false`, temp dirs accumulate in `/tmp`. Document this in user-facing messages.
-5. **Desktop entry uniqueness**: Desktop files use `appmanager-<slug>.desktop` naming. Ensure slug generation (`slugify_app_name()`) handles collisions.
+## Build, Run, and Local Testing
+- Configure and build:
+   - `meson setup build`
+   - `meson compile -C build`
+- Run from the repo root:
+   - `./build/src/app-manager`
+- Install locally for extension testing:
+   - `meson install -C build --destdir "$HOME/.local"`
+   - Then restart Nautilus: `killall nautilus && nautilus &`
+- CLI helpers used by Nautilus and scripts:
+   - `app-manager --install /path/to/app.AppImage`
+   - `app-manager --uninstall /path/or/checksum`
+   - `app-manager --is-installed /path/to/app.AppImage`
 
 ## Testing & Debugging
+- Manual flows: drag different AppImages (with/without icons, terminal vs GUI) onto `DropWindow` and verify registry + desktop entries.
+- Nautilus: after a local install, confirm context menus on `.AppImage` files and that visibility matches registry state.
+- Logging: run with `G_MESSAGES_DEBUG=all ./build/src/app-manager` to surface debug logs.
+- Registry inspection: `cat ~/.local/share/app-manager/installations.json | jq` to confirm record schema and fields.
 
-- **Manual Testing**: Drop various AppImages (executable/non-executable, with/without icons) into drop window.
-- **CLI Testing**: Use `--install`, `--uninstall`, `--is-installed` flags to test headless operation.
-- **Nautilus Testing**: After `meson install`, restart Nautilus: `killall nautilus && nautilus &`. Check context menus on `.appimage` files.
-- **Logs**: Run with `G_MESSAGES_DEBUG=all ./build/src/app-manager` to see debug output.
-- **Registry Inspection**: `cat ~/.local/share/app-manager/installations.json | jq` to verify registry state.
-
-## Critical Files Reference
-
-| File | Purpose |
-|------|---------|
-| `src/core/installer.vala` | Installation/uninstallation orchestration, desktop integration |
-| `src/core/installation_registry.vala` | JSON persistence, lookup by checksum/path |
-| `src/windows/drop_window.vala` | Drag-and-drop UI, icon animation, mode selection |
-| `extensions/nautilus_extension.vala` | File manager context menus |
-| `data/com.github.AppManager.gschema.xml` | User preferences schema |
-| `meson.build` | Build config, shared `core_sources` definition |
+## When Modifying or Adding Code
+- Prefer adding shared helpers to `src/core/` or `src/utils/` when behavior is reused between DropWindow, MainWindow, CLI, and the Nautilus extension.
+- When altering installer/registry behavior, validate both the desktop UI flows and Nautilus extension behavior (after `meson install`).
+- Keep installation paths, desktop naming (`appmanager-<slug>.desktop`), and icon naming (bare icon name, file under `AppPaths.icons_dir`) consistent with `finalize_desktop_and_icon()` rather than reimplementing path logic.

@@ -47,7 +47,6 @@ namespace AppManager {
             this.settings = settings;
             this.appimage_path = path;
             metadata = new AppImageMetadata(File.new_for_path(path));
-            install_mode = determine_install_mode();
             resolved_app_name = extract_app_name();
             build_ui();
             load_icons_async();
@@ -764,25 +763,6 @@ namespace AppManager {
             return resolved;
         }
 
-
-        private InstallMode determine_install_mode() {
-            var stored_mode = settings.get_string("default-install-mode");
-            var normalized = sanitize_mode_id(stored_mode);
-            if (stored_mode != normalized) {
-                settings.set_string("default-install-mode", normalized);
-            }
-            if (normalized == "extracted") {
-                return InstallMode.EXTRACTED;
-            }
-            return InstallMode.PORTABLE;
-        }
-
-        private string sanitize_mode_id(string? value) {
-            if (value != null && value.down() == "extracted") {
-                return "extracted";
-            }
-            return "portable";
-        }
 
         private Gtk.Image create_applications_icon() {
             const int ICON_SIZE = 96;

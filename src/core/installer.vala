@@ -220,9 +220,7 @@ namespace AppManager.Core {
                     record.bin_symlink = create_bin_symlink(exec_path, final_slug);
                 }
             } finally {
-                if (settings.get_boolean("auto-clean-temp")) {
-                    Utils.FileUtils.remove_dir_recursive(temp_dir);
-                }
+                Utils.FileUtils.remove_dir_recursive(temp_dir);
             }
         }
 

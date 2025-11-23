@@ -58,7 +58,7 @@ meson install -C build
 ## Development Notes
 
 - Shared logic (installer, registry, metadata) lives under `src/core/` and is reused by both the UI and Nautilus extension.
-- Temporary extraction directories live under `/tmp/appmgr-*` and are auto-cleaned based on the `auto-clean-temp` preference.
+- Temporary extraction directories live under `/tmp/appmgr-*` and are automatically cleaned after installation.
 - Install metadata persists in `~/.local/share/app-manager/installations.json`.
 
 See `docs/ARCHITECTURE.md` for deeper internals and extension flows.

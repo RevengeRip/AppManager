@@ -40,42 +40,6 @@ namespace AppManager {
             general_page = new Adw.PreferencesPage();
             add(general_page);
 
-            var install_group = new Adw.PreferencesGroup();
-            install_group.title = I18n.tr("Installation");
-            general_page.add(install_group);
-
-            var mode_row = new Adw.ActionRow();
-            mode_row.title = I18n.tr("Default install mode");
-            var mode_combo = new Gtk.ComboBoxText();
-            var stored_mode = settings.get_string("default-install-mode");
-            var normalized_mode = sanitize_mode_id(stored_mode);
-            if (stored_mode != normalized_mode) {
-                settings.set_string("default-install-mode", normalized_mode);
-            }
-            mode_combo.append("portable", I18n.tr("Portable (.AppImage)"));
-            mode_combo.append("extracted", I18n.tr("Extracted (AppRun)"));
-            mode_combo.set_active_id(normalized_mode);
-            mode_combo.set_valign(Gtk.Align.CENTER);
-            mode_combo.set_vexpand(false);
-            mode_combo.set_hexpand(false);
-            mode_combo.changed.connect(() => {
-                var active_id = sanitize_mode_id(mode_combo.get_active_id());
-                mode_combo.set_active_id(active_id);
-                settings.set_string("default-install-mode", active_id);
-            });
-            mode_row.add_suffix(mode_combo);
-            mode_row.activatable_widget = mode_combo;
-            install_group.add(mode_row);
-
-            var cleanup_row = new Adw.SwitchRow();
-            cleanup_row.title = I18n.tr("Auto clean temporary folders");
-            cleanup_row.subtitle = I18n.tr("Remove extraction scratch space right after install");
-            cleanup_row.active = settings.get_boolean("auto-clean-temp");
-            cleanup_row.notify["active"].connect(() => {
-                settings.set_boolean("auto-clean-temp", cleanup_row.active);
-            });
-            install_group.add(cleanup_row);
-
             installs_group = new Adw.PreferencesGroup();
             installs_group.title = I18n.tr("Installed AppImages");
             general_page.add(installs_group);
@@ -85,13 +49,6 @@ namespace AppManager {
                 settings.set_int("window-height", this.get_height());
                 return false;
             });
-        }
-
-        private string sanitize_mode_id(string? value) {
-            if (value != null && value.down() == "extracted") {
-                return "extracted";
-            }
-            return "portable";
         }
 
         private void refresh_installations() {
