@@ -160,6 +160,30 @@ namespace AppManager {
             return 0;
         }
 
+        public void uninstall_record(InstallationRecord record, Gtk.Window? parent_window) {
+            new Thread<void>("appmgr-uninstall", () => {
+                try {
+                    installer.uninstall(record);
+                    Idle.add(() => {
+                        present_uninstall_notification(record, parent_window);
+                        return GLib.Source.REMOVE;
+                    });
+                } catch (Error e) {
+                    var message = e.message;
+                    Idle.add(() => {
+                        var dialog = new Adw.AlertDialog(
+                            I18n.tr("Uninstall failed"),
+                            I18n.tr("%s could not be removed: %s").printf(record.name, message)
+                        );
+                        dialog.add_response("close", I18n.tr("Close"));
+                        dialog.set_default_response("close");
+                        dialog.present(parent_window ?? main_window);
+                        return GLib.Source.REMOVE;
+                    });
+                }
+            });
+        }
+
         private InstallationRecord? locate_record(string target) {
             var by_path = registry.lookup_by_installed_path(target) ?? registry.lookup_by_source(target);
             if (by_path != null) {
@@ -179,14 +203,14 @@ namespace AppManager {
             return null;
         }
 
-        private void present_uninstall_notification(InstallationRecord record) {
-            Gtk.Window? parent = main_window;
-            bool needs_hold = parent == null;
+        private void present_uninstall_notification(InstallationRecord record, Gtk.Window? parent = null) {
+            Gtk.Window? parent_window = parent ?? main_window;
+            bool needs_hold = parent_window == null;
             if (needs_hold) {
                 this.hold();
             }
 
-            var dialog = UninstallNotification.present(this, parent, record);
+            var dialog = UninstallNotification.present(this, parent_window, record);
 
             if (!needs_hold) {
                 return;

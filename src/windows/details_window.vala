@@ -128,36 +128,6 @@ namespace AppManager {
             });
             props_group.add(exec_row);
             
-            // Icon
-            var icon_row = new Adw.EntryRow();
-            icon_row.title = I18n.tr("Icon");
-            icon_row.text = desktop_props.get("Icon") ?? "";
-            icon_row.changed.connect(() => {
-                update_desktop_file_property(record.desktop_file, "Icon", icon_row.text);
-            });
-            props_group.add(icon_row);
-            
-            // Version
-            var version_row = new Adw.EntryRow();
-            version_row.title = I18n.tr("Version");
-            version_row.text = desktop_props.get("X-AppImage-Version") ?? "";
-            version_row.changed.connect(() => {
-                update_desktop_file_property(record.desktop_file, "X-AppImage-Version", version_row.text);
-                // Update the record version and re-register to save
-                record.version = version_row.text;
-                registry.register(record);
-            });
-            props_group.add(version_row);
-            
-            // StartupWMClass
-            var wmclass_row = new Adw.EntryRow();
-            wmclass_row.title = I18n.tr("Startup WM Class");
-            wmclass_row.text = desktop_props.get("StartupWMClass") ?? "";
-            wmclass_row.changed.connect(() => {
-                update_desktop_file_property(record.desktop_file, "StartupWMClass", wmclass_row.text);
-            });
-            props_group.add(wmclass_row);
-            
             // Keywords
             var keywords_row = new Adw.EntryRow();
             keywords_row.title = I18n.tr("Keywords");
@@ -197,6 +167,41 @@ namespace AppManager {
                 update_desktop_file_property(record.desktop_file, "X-AppImage-UpdateURL", update_row.text);
             });
             props_group.add(update_row);
+
+            // Advanced
+            var advanced_group = new Adw.ExpanderRow();
+            advanced_group.title = I18n.tr("Advanced");
+            props_group.add(advanced_group);
+
+            // Icon
+            var icon_row = new Adw.EntryRow();
+            icon_row.title = I18n.tr("Icon name");
+            icon_row.text = desktop_props.get("Icon") ?? "";
+            icon_row.changed.connect(() => {
+                update_desktop_file_property(record.desktop_file, "Icon", icon_row.text);
+            });
+            advanced_group.add_row(icon_row);
+            
+            // StartupWMClass
+            var wmclass_row = new Adw.EntryRow();
+            wmclass_row.title = I18n.tr("Startup WM Class");
+            wmclass_row.text = desktop_props.get("StartupWMClass") ?? "";
+            wmclass_row.changed.connect(() => {
+                update_desktop_file_property(record.desktop_file, "StartupWMClass", wmclass_row.text);
+            });
+            advanced_group.add_row(wmclass_row);
+
+            // Version
+            var version_row = new Adw.EntryRow();
+            version_row.title = I18n.tr("Version");
+            version_row.text = desktop_props.get("X-AppImage-Version") ?? "";
+            version_row.changed.connect(() => {
+                update_desktop_file_property(record.desktop_file, "X-AppImage-Version", version_row.text);
+                // Update the record version and re-register to save
+                record.version = version_row.text;
+                registry.register(record);
+            });
+            advanced_group.add_row(version_row);
             
             // NoDisplay toggle
             var nodisplay_row = new Adw.SwitchRow();
@@ -207,7 +212,7 @@ namespace AppManager {
             nodisplay_row.notify["active"].connect(() => {
                 update_desktop_file_property(record.desktop_file, "NoDisplay", nodisplay_row.active ? "true" : "false");
             });
-            props_group.add(nodisplay_row);
+            advanced_group.add_row(nodisplay_row);
             
             detail_page.add(props_group);
             
@@ -216,7 +221,7 @@ namespace AppManager {
             actions_group.title = I18n.tr("Actions");
             
             var delete_row = new Adw.ButtonRow();
-            delete_row.title = I18n.tr("Delete Application");
+            delete_row.title = I18n.tr("Move to Trash");
             delete_row.start_icon_name = "user-trash-symbolic";
             delete_row.add_css_class("destructive-action");
             delete_row.activated.connect(() => {

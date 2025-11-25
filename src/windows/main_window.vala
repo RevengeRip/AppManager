@@ -319,41 +319,9 @@ namespace AppManager {
             var details_window = new DetailsWindow(record, registry);
             details_window.uninstall_requested.connect((r) => {
                 navigation_view.pop();
-                uninstall_record(r);
+                app_ref.uninstall_record(r, this);
             });
             navigation_view.push(details_window);
-        }
-
-        private void uninstall_record(InstallationRecord record) {
-            new Thread<void>("appmgr-uninstall", () => {
-                try {
-                    installer.uninstall(record);
-                    Idle.add(() => {
-                        refresh_installations();
-                        present_uninstall_notification(record);
-                        return GLib.Source.REMOVE;
-                    });
-                } catch (Error e) {
-                    var message = e.message;
-                    Idle.add(() => {
-                        var dialog = new Adw.AlertDialog(
-                            I18n.tr("Uninstall failed"),
-                            I18n.tr("%s could not be removed: %s").printf(record.name, message)
-                        );
-                        dialog.add_response("close", I18n.tr("Close"));
-                        dialog.set_default_response("close");
-                        dialog.present(this);
-                        return GLib.Source.REMOVE;
-                    });
-                }
-            });
-        }
-
-        private void present_uninstall_notification(InstallationRecord record) {
-            if (app_ref == null) {
-                return;
-            }
-            UninstallNotification.present(app_ref, this, record);
         }
     }
 }
