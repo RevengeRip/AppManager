@@ -44,6 +44,8 @@ namespace AppManager.Core {
         private Installer installer;
         private Soup.Session session;
         private string user_agent;
+        private const int GITHUB_RELEASES_PER_PAGE = 20;
+        private const int GITHUB_RELEASES_PAGE_LIMIT = 3;
 
         public Updater(InstallationRegistry registry, Installer installer) {
             this.registry = registry;
@@ -171,7 +173,62 @@ namespace AppManager.Core {
         }
 
         private ReleaseInfo? fetch_latest_github_release(GithubSource source, GLib.Cancellable? cancellable) throws Error {
-            var message = new Soup.Message("GET", source.api_url());
+            ReleaseInfo? fallback = null;
+
+            for (int page = 1; page <= GITHUB_RELEASES_PAGE_LIMIT; page++) {
+                var releases_url = source.releases_api_url(page, GITHUB_RELEASES_PER_PAGE);
+                var root = fetch_github_json(releases_url, cancellable);
+                if (root == null) {
+                    break;
+                }
+
+                if (root.get_node_type() == Json.NodeType.ARRAY) {
+                    var array = root.get_array();
+                    if (array.get_length() == 0) {
+                        break;
+                    }
+                    for (uint i = 0; i < array.get_length(); i++) {
+                        var info = parse_github_release_node(array.get_element(i));
+                        if (info == null) {
+                            continue;
+                        }
+                        if (fallback == null) {
+                            fallback = info;
+                        }
+                        if (source.select_asset(info.assets) != null) {
+                            return info;
+                        }
+                    }
+                    if (array.get_length() < GITHUB_RELEASES_PER_PAGE) {
+                        break;
+                    }
+                    continue;
+                }
+
+                if (root.get_node_type() == Json.NodeType.OBJECT) {
+                    var single = parse_github_release_node(root);
+                    if (single != null) {
+                        return single;
+                    }
+                    break;
+                }
+
+                break;
+            }
+
+            if (fallback != null) {
+                return fallback;
+            }
+
+            var latest_root = fetch_github_json(source.latest_api_url(), cancellable);
+            if (latest_root == null || latest_root.get_node_type() != Json.NodeType.OBJECT) {
+                return null;
+            }
+            return build_github_release(latest_root.get_object());
+        }
+
+        private Json.Node? fetch_github_json(string url, GLib.Cancellable? cancellable) throws Error {
+            var message = new Soup.Message("GET", url);
             message.request_headers.replace("Accept", "application/vnd.github+json");
             message.request_headers.replace("User-Agent", user_agent);
             var bytes = session.send_and_read(message, cancellable);
@@ -183,32 +240,22 @@ namespace AppManager.Core {
             var parser = new Json.Parser();
             var stream = new MemoryInputStream.from_bytes(bytes);
             parser.load_from_stream(stream, cancellable);
-            if (parser.get_root() == null || parser.get_root().get_node_type() != Json.NodeType.OBJECT) {
+            return parser.steal_root();
+        }
+
+        private ReleaseInfo? parse_github_release_node(Json.Node node) {
+            if (node.get_node_type() != Json.NodeType.OBJECT) {
                 return null;
             }
+            return build_github_release(node.get_object());
+        }
 
-            var root = parser.get_root().get_object();
+        private ReleaseInfo build_github_release(Json.Object release_obj) {
             string? tag_name = null;
-            if (root.has_member("tag_name")) {
-                tag_name = root.get_string_member("tag_name");
+            if (release_obj.has_member("tag_name")) {
+                tag_name = release_obj.get_string_member("tag_name");
             }
-
-            var assets = new ArrayList<ReleaseAsset>();
-            if (root.has_member("assets")) {
-                var assets_array = root.get_array_member("assets");
-                for (uint i = 0; i < assets_array.get_length(); i++) {
-                    var node = assets_array.get_element(i);
-                    if (node.get_node_type() != Json.NodeType.OBJECT) {
-                        continue;
-                    }
-                    var asset_obj = node.get_object();
-                    if (!asset_obj.has_member("name") || !asset_obj.has_member("browser_download_url")) {
-                        continue;
-                    }
-                    assets.add(new ReleaseAsset(asset_obj.get_string_member("name"), asset_obj.get_string_member("browser_download_url")));
-                }
-            }
-
+            var assets = extract_github_assets(release_obj);
             var normalized = sanitize_version(tag_name);
             return new ReleaseInfo(tag_name, normalized, assets);
         }
@@ -297,6 +344,28 @@ namespace AppManager.Core {
             return assets;
         }
 
+        private ArrayList<ReleaseAsset> extract_github_assets(Json.Object release_obj) {
+            var assets = new ArrayList<ReleaseAsset>();
+            if (!release_obj.has_member("assets")) {
+                return assets;
+            }
+
+            var assets_array = release_obj.get_array_member("assets");
+            for (uint i = 0; i < assets_array.get_length(); i++) {
+                var node = assets_array.get_element(i);
+                if (node.get_node_type() != Json.NodeType.OBJECT) {
+                    continue;
+                }
+                var asset_obj = node.get_object();
+                if (!asset_obj.has_member("name") || !asset_obj.has_member("browser_download_url")) {
+                    continue;
+                }
+                assets.add(new ReleaseAsset(asset_obj.get_string_member("name"), asset_obj.get_string_member("browser_download_url")));
+            }
+
+            return assets;
+        }
+
         private DownloadArtifact download_asset(string url, GLib.Cancellable? cancellable) throws Error {
             var temp_dir = AppManager.Utils.FileUtils.create_temp_dir("appmgr-update-");
             var target_name = derive_filename(url);
@@ -356,9 +425,29 @@ namespace AppManager.Core {
             if (trimmed.length == 0) {
                 return null;
             }
+
+            // Skip any leading channel prefix (e.g. "desktop-", "linux-") but keep an optional preceding "v".
+            int start = 0;
+            bool found_digit = false;
+            for (int i = 0; i < trimmed.length; i++) {
+                char ch = trimmed[i];
+                if (ch >= '0' && ch <= '9') {
+                    start = i;
+                    if (i > 0 && (trimmed[i - 1] == 'v' || trimmed[i - 1] == 'V')) {
+                        start = i - 1;
+                    }
+                    found_digit = true;
+                    break;
+                }
+            }
+            if (found_digit && start > 0) {
+                trimmed = trimmed.substring(start);
+            }
+
             if (trimmed.has_prefix("v") || trimmed.has_prefix("V")) {
                 trimmed = trimmed.substring(1);
             }
+
             var builder = new StringBuilder();
             for (int i = 0; i < trimmed.length; i++) {
                 char ch = trimmed[i];
@@ -543,8 +632,12 @@ namespace AppManager.Core {
                 }
             }
 
-            public string api_url() {
+            public string latest_api_url() {
                 return "https://api.github.com/repos/%s/%s/releases/latest".printf(owner, repo);
+            }
+
+            public string releases_api_url(int page = 1, int per_page = 20) {
+                return "https://api.github.com/repos/%s/%s/releases?per_page=%d&page=%d".printf(owner, repo, per_page, page);
             }
         }
 
