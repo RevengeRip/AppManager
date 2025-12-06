@@ -13,6 +13,8 @@ gtk_dep = dependency('gtk4')
 json_glib_dep = dependency('json-glib-1.0')
 gee_dep = dependency('gee-0.8')
 libsoup_dep = dependency('libsoup-3.0')
+libportal_dep = dependency('libportal', version: '>= 0.6')
+libportal_gtk_dep = dependency('libportal-gtk4', version: '>= 0.6')
 
 add_project_arguments(['--target-glib=2.74', '--pkg=posix'], language: 'vala')
 
@@ -25,6 +27,7 @@ core_sources = files(
   'src/core/app_image_assets.vala',
   'src/core/installer.vala',
   'src/core/updater.vala',
+  'src/core/background_update_service.vala',
   'src/core/i18n.vala',
   'src/utils/file_utils.vala'
 )

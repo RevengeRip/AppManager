@@ -1,5 +1,6 @@
 using AppManager.Core;
 using AppManager.Utils;
+using GLib;
 using Gee;
 
 namespace AppManager {
@@ -8,6 +9,7 @@ namespace AppManager {
         private InstallationRegistry registry;
         private Installer installer;
         private Settings settings;
+        private BackgroundUpdateService? bg_update_service;
         public Application() {
             Object(application_id: Core.APPLICATION_ID,
                 flags: ApplicationFlags.HANDLES_OPEN | ApplicationFlags.HANDLES_COMMAND_LINE);
@@ -18,6 +20,7 @@ namespace AppManager {
 
         protected override void startup() {
             base.startup();
+            bg_update_service = new BackgroundUpdateService(settings, registry, installer);
             var quit_action = new GLib.SimpleAction("quit", null);
             quit_action.activate.connect(() => this.quit());
             this.add_action(quit_action);
@@ -60,6 +63,14 @@ namespace AppManager {
         protected override void activate() {
             if (main_window == null) {
                 main_window = new MainWindow(this, registry, installer, settings);
+
+                if (settings.get_boolean("auto-check-updates") && !settings.get_boolean("background-permission-requested")) {
+                    request_background_updates.begin();
+                }
+            }
+
+            if (bg_update_service != null && bg_update_service.should_check_now()) {
+                perform_background_check.begin();
             }
             main_window.present();
         }
@@ -252,5 +263,21 @@ namespace AppManager {
                 return GLib.Source.REMOVE;
             });
         }
+
+        private async void request_background_updates() {
+            if (bg_update_service == null) {
+                return;
+            }
+            yield bg_update_service.request_background_permission(main_window);
+        }
+
+        private async void perform_background_check() {
+            if (bg_update_service == null) {
+                return;
+            }
+            var cancellable = new Cancellable();
+            yield bg_update_service.perform_background_check(cancellable);
+        }
+
     }
 }

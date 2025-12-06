@@ -51,6 +51,21 @@ namespace AppManager.Core {
         }
     }
 
+    public class UpdateCheckInfo : Object {
+        public bool has_update { get; private set; }
+        public string latest_version { get; private set; }
+        public string current_version { get; private set; }
+        public string? display_version { get; private set; }
+
+        public UpdateCheckInfo(bool has_update, string latest, string current, string? display) {
+            Object();
+            this.has_update = has_update;
+            this.latest_version = latest;
+            this.current_version = current;
+            this.display_version = display;
+        }
+    }
+
     public class Updater : Object {
         public signal void record_checking(InstallationRecord record);
         public signal void record_downloading(InstallationRecord record);
@@ -103,6 +118,11 @@ namespace AppManager.Core {
 
         public UpdateResult update_single(InstallationRecord record, GLib.Cancellable? cancellable = null) {
             return update_record(record, cancellable);
+        }
+
+        public async UpdateCheckInfo? check_for_update_async(InstallationRecord record, GLib.Cancellable? cancellable = null) throws Error {
+            // Lightweight check: no downloads, just metadata fetch
+            return check_for_update(record, cancellable);
         }
 
         private ArrayList<UpdateProbeResult> probe_updates_parallel(InstallationRecord[] records, GLib.Cancellable? cancellable) {
@@ -313,6 +333,62 @@ namespace AppManager.Core {
                 log_update_event(record, "FAILED", e.message);
                 return new UpdateResult(record, UpdateStatus.FAILED, e.message);
             }
+        }
+
+        private UpdateCheckInfo? check_for_update(InstallationRecord record, GLib.Cancellable? cancellable) throws Error {
+            var update_url = read_update_url(record);
+            if (update_url == null || update_url.strip() == "") {
+                return null;
+            }
+
+            var source = resolve_update_source(update_url, record.version);
+            if (source == null) {
+                return null;
+            }
+
+            if (source is DirectUrlSource) {
+                return check_direct_update_info(record, source as DirectUrlSource, cancellable);
+            }
+
+            var release_source = source as ReleaseSource;
+            if (release_source == null) {
+                return null;
+            }
+
+            var release = fetch_release_for_source(release_source, cancellable);
+            if (release == null) {
+                return null;
+            }
+
+            var latest_version = release.normalized_version ?? release.tag_name ?? "";
+            var current_version = release_source.current_version ?? record.version ?? "";
+            var display_version = release.tag_name ?? latest_version;
+            var asset = release_source.select_asset(release.assets);
+
+            if (asset == null) {
+                return new UpdateCheckInfo(false, latest_version, current_version, display_version);
+            }
+
+            bool has_update = false;
+            if (latest_version != "" && current_version != "") {
+                has_update = compare_versions(latest_version, current_version) > 0;
+            }
+
+            return new UpdateCheckInfo(has_update, latest_version, current_version, display_version);
+        }
+
+        private UpdateCheckInfo? check_direct_update_info(InstallationRecord record, DirectUrlSource source, GLib.Cancellable? cancellable) throws Error {
+            var message = send_head(source.url, cancellable);
+            var etag = message.response_headers.get_one("ETag");
+            if (etag == null || etag.strip() == "") {
+                var baseline = record.etag ?? "";
+                return new UpdateCheckInfo(false, baseline, baseline, null);
+            }
+
+            var current = etag.strip();
+            var previous = record.etag ?? current;
+            var has_update = previous != current;
+            return new UpdateCheckInfo(has_update, current, previous, current);
         }
 
         private UpdateProbeResult probe_direct(InstallationRecord record, DirectUrlSource source, GLib.Cancellable? cancellable) {

@@ -36,6 +36,7 @@ namespace AppManager {
         private Gtk.SearchBar? search_bar;
         private Gtk.SearchEntry? search_entry;
         private string current_search_query = "";
+        private int[] update_interval_options = { 86400, 604800, 2592000 };
 
         public MainWindow(Application app, InstallationRegistry registry, Installer installer, Settings settings) {
             Object(application: app);
@@ -137,6 +138,9 @@ namespace AppManager {
             apps_group = new Adw.PreferencesGroup();
             apps_group.title = I18n.tr("My Apps");
             general_page.add(apps_group);
+
+            var updates_group = create_update_preferences();
+            general_page.add(updates_group);
 
             this.close_request.connect(() => {
                 settings.set_int("window-width", this.get_width());
@@ -828,6 +832,54 @@ namespace AppManager {
             CHECKING,
             READY_TO_UPDATE,
             UPDATING
+        }
+
+        private Adw.PreferencesGroup create_update_preferences() {
+            var group = new Adw.PreferencesGroup();
+            group.title = I18n.tr("Updates");
+            group.description = I18n.tr("Configure automatic update checking");
+
+            var auto_check_row = new Adw.SwitchRow();
+            auto_check_row.title = I18n.tr("Check for updates automatically");
+            auto_check_row.subtitle = I18n.tr("Periodically check for new versions in the background");
+            settings.bind("auto-check-updates", auto_check_row, "active", GLib.SettingsBindFlags.DEFAULT);
+
+            var interval_row = new Adw.ComboRow();
+            interval_row.title = I18n.tr("Check interval");
+            var interval_model = new Gtk.StringList(null);
+            interval_model.append(I18n.tr("Daily"));
+            interval_model.append(I18n.tr("Weekly"));
+            interval_model.append(I18n.tr("Monthly"));
+            interval_row.model = interval_model;
+            interval_row.selected = interval_index_for_value(settings.get_int("update-check-interval"));
+
+            settings.bind("auto-check-updates", interval_row, "sensitive", GLib.SettingsBindFlags.GET);
+
+            interval_row.notify["selected"].connect(() => {
+                var selected_index = (int) interval_row.selected;
+                if (selected_index < 0 || selected_index >= update_interval_options.length) {
+                    return;
+                }
+                settings.set_int("update-check-interval", update_interval_options[selected_index]);
+            });
+
+            settings.changed["update-check-interval"].connect(() => {
+                interval_row.selected = interval_index_for_value(settings.get_int("update-check-interval"));
+            });
+
+            group.add(auto_check_row);
+            group.add(interval_row);
+
+            return group;
+        }
+
+        private uint interval_index_for_value(int value) {
+            for (int i = 0; i < update_interval_options.length; i++) {
+                if (update_interval_options[i] == value) {
+                    return (uint) i;
+                }
+            }
+            return 0; // default to Daily
         }
 
         private void ensure_shortcuts_window() {

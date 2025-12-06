@@ -22,6 +22,7 @@
     <release version="0.1.0-beta" date="2025-11-27">
       <description>
         <p>Initial preview with drag-and-drop installs, dual install modes, Nautilus menus, and preferences UI.</p>
+          <p>Added optional background update checks powered by the XDG Background portal. Users grant permission on first launch, can pick an interval, and receive a notification when updates are detected.</p>
       </description>
     </release>
   </releases>

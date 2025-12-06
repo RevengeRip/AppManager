@@ -20,12 +20,13 @@ AppManager is a Libadwaita-powered desktop utility that makes installing and uni
 - 🧠 **Smart install modes** — automatically chooses between portable (move the AppImage) and extracted (unpack to `~/Applications/.installed/AppRun`) while letting you override it.
 - 🗂️ **Desktop integration** — extracts the bundled `.desktop` file via `7z`, rewrites `Exec` and `Icon`, and stores it in `~/.local/share/applications`.
 - 📋 **Install registry + preferences** — main window lists installed apps, default mode, and cleanup behaviors, all stored with GSettings.
+- 🔔 **Background update checks** — optional portal-backed checks with user-granted permission, interval control, and a notification when updates are found.
 
 ## Requirements
 
 - GNOME 45–49 desktop
 - `valac`, `meson`, `ninja`
-- Libraries: `libadwaita-1`, `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`
+- Libraries: `libadwaita-1`, `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`, `libportal` (>= 0.6), `libportal-gtk4` (>= 0.6)
 - Runtime tools: `7z`/`p7zip-full`
 
 ## Build & Install
@@ -51,6 +52,12 @@ meson install -C build
 - **Double-click** a `.AppImage`: AppManager claims the `application/x-iso9660-appimage` MIME type, shows the drag window, and installs after you drag the icon onto `~/Applications` (or click Install).
 - **Preferences**: Launch AppManager from the application menu to tweak defaults and review installed items.
 - **CLI helpers**: `app-manager --install /path/to/AppImage`, `app-manager --uninstall /path/or/checksum`, and `app-manager --is-installed /path/to/AppImage` for scripting.
+
+## Background Updates
+
+- Enable or disable automatic checks in the Updates section of preferences.
+- The first launch asks for background permission via the XDG Background portal; no checks run unless granted.
+- Choose an interval (hourly to weekly). AppManager only fetches release metadata—downloads still require manual action from the UI.
 
 ## Development Notes
 
