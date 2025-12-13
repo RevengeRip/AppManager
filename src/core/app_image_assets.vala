@@ -423,7 +423,7 @@ namespace AppManager.Core {
         }
 
         private static bool try_extract_entry(string appimage_path, string output_dir, string pattern) {
-            if (try_run_7z({"x", appimage_path, "-o" + output_dir, pattern, "-y"}) &&
+            if (try_run_7z({"x", "-tSquashFS", appimage_path, "-o" + output_dir, pattern, "-y"}) &&
                 extraction_successful(output_dir, pattern)) {
                 return true;
             }
