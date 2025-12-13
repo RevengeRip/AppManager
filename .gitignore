@@ -9,3 +9,5 @@ appimaged/
 appimagetool/
 squashfs-root/
 squashfs-*.img
+build/
+
