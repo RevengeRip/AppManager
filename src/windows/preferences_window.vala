@@ -4,6 +4,9 @@ namespace AppManager {
     public class PreferencesWindow : Adw.PreferencesWindow {
         private GLib.Settings settings;
         private int[] update_interval_options = { 86400, 604800, 2592000 };
+        private bool portal_available = false;
+        private Adw.SwitchRow? auto_check_row = null;
+        private Adw.ComboRow? interval_row = null;
         private const string GTK_CONFIG_SUBDIR = "gtk-4.0";
         private const string APP_CSS_FILENAME = "AppManager.css";
         private const string APP_CSS_IMPORT_LINE = "@import url(\"AppManager.css\");";
@@ -20,6 +23,7 @@ namespace AppManager {
             this.settings = settings;
             this.set_title(I18n.tr("Preferences"));
             this.set_default_size(480, 360);
+            check_portal_availability.begin();
             build_ui();
         }
 
@@ -53,6 +57,11 @@ namespace AppManager {
             auto_check_row.title = I18n.tr("Check for updates automatically");
             auto_check_row.subtitle = I18n.tr("Periodically check for new versions in the background");
             settings.bind("auto-check-updates", auto_check_row, "active", GLib.SettingsBindFlags.DEFAULT);
+            this.auto_check_row = auto_check_row;
+
+            settings.changed["auto-check-updates"].connect(() => {
+                handle_auto_update_toggle(settings.get_boolean("auto-check-updates"));
+            });
 
             var interval_row = new Adw.ComboRow();
             interval_row.title = I18n.tr("Check interval");
@@ -63,6 +72,7 @@ namespace AppManager {
             interval_row.model = interval_model;
             interval_row.selected = interval_index_for_value(settings.get_int("update-check-interval"));
             settings.bind("auto-check-updates", interval_row, "sensitive", GLib.SettingsBindFlags.GET);
+            this.interval_row = interval_row;
 
             interval_row.notify["selected"].connect(() => {
                 var selected_index = (int) interval_row.selected;
@@ -84,6 +94,84 @@ namespace AppManager {
             this.add(updates_page);
 
             apply_thumbnail_background_preference(settings.get_boolean("remove-thumbnail-checkerboard"));
+        }
+
+        private async void check_portal_availability() {
+            try {
+                var connection = yield Bus.get(BusType.SESSION);
+                var result = yield connection.call(
+                    "org.freedesktop.portal.Desktop",
+                    "/org/freedesktop/portal/desktop",
+                    "org.freedesktop.DBus.Introspectable",
+                    "Introspect",
+                    null,
+                    null,
+                    DBusCallFlags.NONE,
+                    -1,
+                    null
+                );
+                string xml;
+                result.get("(s)", out xml);
+                portal_available = xml.contains("org.freedesktop.portal.Background");
+            } catch (Error e) {
+                warning("Failed to check portal availability: %s", e.message);
+                portal_available = false;
+            }
+            
+            // Update UI after check completes
+            update_portal_ui_state();
+        }
+
+        private void update_portal_ui_state() {
+            if (auto_check_row == null || interval_row == null) {
+                return;
+            }
+            
+            if (!portal_available) {
+                auto_check_row.subtitle = I18n.tr("Background updates require the XDG portal, which is unavailable on this system.");
+                auto_check_row.sensitive = false;
+                interval_row.sensitive = false;
+            }
+        }
+
+        private void handle_auto_update_toggle(bool enabled) {
+            var autostart_file = Path.build_filename(
+                Environment.get_user_config_dir(),
+                "autostart",
+                "com.github.AppManager.desktop"
+            );
+            
+            if (enabled) {
+                // Write autostart file when enabled
+                try {
+                    var autostart_dir = Path.build_filename(Environment.get_user_config_dir(), "autostart");
+                    DirUtils.create_with_parents(autostart_dir, 0755);
+                    
+                    var content = """[Desktop Entry]
+Type=Application
+Name=AppManager Background Updater
+Exec=app-manager --background-update
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
+X-XDP-Autostart=com.github.AppManager
+""";
+                    FileUtils.set_contents(autostart_file, content);
+                    debug("Created autostart file: %s", autostart_file);
+                } catch (Error e) {
+                    warning("Failed to write autostart file: %s", e.message);
+                }
+            } else {
+                // Remove autostart file when disabled
+                var file = File.new_for_path(autostart_file);
+                if (file.query_exists()) {
+                    try {
+                        file.delete();
+                        debug("Removed autostart file: %s", autostart_file);
+                    } catch (Error e) {
+                        warning("Failed to remove autostart file: %s", e.message);
+                    }
+                }
+            }
         }
 
         private uint interval_index_for_value(int value) {

@@ -11,12 +11,66 @@ namespace AppManager {
         private Settings settings;
         private BackgroundUpdateService? bg_update_service;
         private PreferencesWindow? preferences_window;
+        private static bool opt_version = false;
+        private static bool opt_help = false;
+        private static bool opt_background_update = false;
+        private static string? opt_install = null;
+        private static string? opt_uninstall = null;
+        private static string? opt_is_installed = null;
+        
+        private const OptionEntry[] options = {
+            { "help", 'h', 0, OptionArg.NONE, ref opt_help, "Show help options", null },
+            { "version", 0, 0, OptionArg.NONE, ref opt_version, "Display version number", null },
+            { "background-update", 0, 0, OptionArg.NONE, ref opt_background_update, "Run background update check", null },
+            { "install", 0, 0, OptionArg.FILENAME, ref opt_install, "Install an AppImage from PATH", "PATH" },
+            { "uninstall", 0, 0, OptionArg.STRING, ref opt_uninstall, "Uninstall an AppImage (by path or checksum)", "PATH" },
+            { "is-installed", 0, 0, OptionArg.FILENAME, ref opt_is_installed, "Check if an AppImage is installed", "PATH" },
+            { null }
+        };
+        
         public Application() {
             Object(application_id: Core.APPLICATION_ID,
-                flags: ApplicationFlags.HANDLES_OPEN | ApplicationFlags.HANDLES_COMMAND_LINE);
+                flags: ApplicationFlags.HANDLES_OPEN | ApplicationFlags.HANDLES_COMMAND_LINE | ApplicationFlags.NON_UNIQUE);
             settings = new Settings(Core.APPLICATION_ID);
             registry = new InstallationRegistry();
             installer = new Installer(registry, settings);
+            
+            add_main_option_entries(options);
+            set_option_context_parameter_string("[FILE...]");
+            set_option_context_summary("AppImage Manager - Manage and update AppImages on your system");
+        }
+
+        protected override int handle_local_options(GLib.VariantDict options) {
+            if (opt_help) {
+                print("""Usage:
+  app-manager [OPTION...] [FILE...]
+
+Application Options:
+  -h, --help                  Show help options
+  --version                   Display version number
+  --background-update         Run background update check
+  --install PATH              Install an AppImage from PATH
+  --uninstall PATH            Uninstall an AppImage (by path or checksum)
+  --is-installed PATH         Check if an AppImage is installed
+
+Examples:
+  app-manager                             Launch the GUI
+  app-manager app.AppImage                Open installer for app.AppImage
+  app-manager --install app.AppImage      Install app.AppImage
+  app-manager --uninstall app.AppImage    Uninstall app.AppImage
+  app-manager --is-installed app.AppImage Check installation status
+  app-manager --background-update         Run background update check
+
+""");
+                return 0;
+            }
+            
+            if (opt_version) {
+                print("AppManager %s\n", Core.APPLICATION_VERSION);
+                return 0;
+            }
+            
+            return -1;  // Continue processing
         }
 
         protected override void startup() {
@@ -83,10 +137,6 @@ namespace AppManager {
                     request_background_updates.begin();
                 }
             }
-
-            if (bg_update_service != null && bg_update_service.should_check_now()) {
-                perform_background_check.begin();
-            }
             main_window.present();
         }
 
@@ -112,24 +162,28 @@ namespace AppManager {
         }
 
         protected override int command_line(GLib.ApplicationCommandLine command_line) {
-            string? install_path = null;
-            string? uninstall_target = null;
-            string? query_path = null;
+            if (opt_background_update) {
+                return run_background_update(command_line);
+            }
+            
             var file_list = new ArrayList<GLib.File>();
 
+            // Handle non-option arguments (file paths)
             var args = command_line.get_arguments();
             debug("command_line: got %u args", args.length);
             for (int _k = 0; _k < args.length; _k++)
                 debug("command_line arg[%d] = %s", _k, args[_k]);
             for (int i = 1; i < args.length; i++) {
                 var arg = args[i];
-                if (arg == "--install" && i + 1 < args.length) {
-                    install_path = args[++i];
-                } else if (arg == "--uninstall" && i + 1 < args.length) {
-                    uninstall_target = args[++i];
-                } else if (arg == "--is-installed" && i + 1 < args.length) {
-                    query_path = args[++i];
-                } else if (arg.length > 0 && arg[0] != '-') {
+                // Skip already-processed option arguments
+                if (arg == "--install" || arg == "--uninstall" || arg == "--is-installed" ||
+                    arg == "--background-update" || arg == "--help" || arg == "-h" || arg == "--version") {
+                    if (arg == "--install" || arg == "--uninstall" || arg == "--is-installed") {
+                        i++; // Skip the value
+                    }
+                    continue;
+                }
+                if (arg.length > 0 && arg[0] != '-') {
                     if (arg.has_prefix("file://")) {
                         file_list.add(File.new_for_uri(arg));
                     } else {
@@ -142,9 +196,9 @@ namespace AppManager {
                 return 0;
             }
 
-            if (install_path != null) {
+            if (opt_install != null) {
                 try {
-                    var record = installer.install(install_path);
+                    var record = installer.install(opt_install);
                     command_line.print("Installed %s\n", record.name);
                     return 0;
                 } catch (Error e) {
@@ -153,11 +207,11 @@ namespace AppManager {
                 }
             }
 
-            if (uninstall_target != null) {
+            if (opt_uninstall != null) {
                 try {
-                    var record = locate_record(uninstall_target);
+                    var record = locate_record(opt_uninstall);
                     if (record == null) {
-                        command_line.printerr("No installation matches %s\n", uninstall_target);
+                        command_line.printerr("No installation matches %s\n", opt_uninstall);
                         return 3;
                     }
                     
@@ -174,9 +228,9 @@ namespace AppManager {
                 }
             }
 
-            if (query_path != null) {
+            if (opt_is_installed != null) {
                 try {
-                    var checksum = Utils.FileUtils.compute_checksum(query_path);
+                    var checksum = Utils.FileUtils.compute_checksum(opt_is_installed);
                     var installed = registry.is_installed_checksum(checksum);
                     command_line.print(installed ? "installed\n" : "missing\n");
                     return installed ? 0 : 1;
@@ -373,12 +427,31 @@ namespace AppManager {
             yield bg_update_service.request_background_permission(main_window);
         }
 
-        private async void perform_background_check() {
-            if (bg_update_service == null) {
-                return;
+        private int run_background_update(GLib.ApplicationCommandLine command_line) {
+            if (!settings.get_boolean("auto-check-updates")) {
+                debug("Auto-check updates disabled; exiting");
+                return 0;
             }
+
+            if (bg_update_service == null) {
+                bg_update_service = new BackgroundUpdateService(settings, registry, installer);
+            }
+
+            if (!bg_update_service.should_check_now()) {
+                debug("Not time to check yet; exiting");
+                return 0;
+            }
+
+            var loop = new MainLoop();
             var cancellable = new Cancellable();
-            yield bg_update_service.perform_background_check(cancellable);
+
+            bg_update_service.perform_background_check.begin(cancellable, (obj, res) => {
+                bg_update_service.perform_background_check.end(res);
+                loop.quit();
+            });
+
+            loop.run();
+            return 0;
         }
 
     }

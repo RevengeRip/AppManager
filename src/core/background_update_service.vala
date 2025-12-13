@@ -17,7 +17,7 @@ namespace AppManager.Core {
             this.update_log_path = Path.build_filename(AppPaths.data_dir, "updates.log");
         }
 
-        public async bool request_background_permission(Gtk.Window? parent, Cancellable? cancellable = null) {
+        public async bool request_background_permission(GLib.Object? parent, Cancellable? cancellable = null) {
             if (settings.get_boolean("background-permission-requested")) {
                 return true;
             }
@@ -26,12 +26,52 @@ namespace AppManager.Core {
 
             try {
                 var message = I18n.tr("AppManager needs permission to check for updates in the background");
-                var granted = yield portal.request_background(null, message, null, Xdp.BackgroundFlags.AUTOSTART, cancellable);
+                
+                // Build the command list for autostart
+                var commandline = new GLib.GenericArray<weak string>();
+                commandline.add("app-manager");
+                commandline.add("--background-update");
+                
+                var granted = yield portal.request_background(
+                    null,
+                    message,
+                    commandline,
+                    Xdp.BackgroundFlags.AUTOSTART,
+                    cancellable
+                );
+                
+                if (granted) {
+                    // Portal creates the autostart file but doesn't populate Exec line
+                    // Write it ourselves to ensure it's complete
+                    write_autostart_file();
+                }
+                
                 settings.set_boolean("background-permission-requested", true);
                 return granted;
             } catch (Error e) {
                 warning("Failed to request background permission: %s", e.message);
                 return false;
+            }
+        }
+
+        private void write_autostart_file() {
+            try {
+                var autostart_dir = Path.build_filename(Environment.get_user_config_dir(), "autostart");
+                DirUtils.create_with_parents(autostart_dir, 0755);
+                
+                var autostart_file = Path.build_filename(autostart_dir, "com.github.AppManager.desktop");
+                var content = """[Desktop Entry]
+Type=Application
+Name=AppManager Background Updater
+Exec=app-manager --background-update
+X-GNOME-Autostart-enabled=true
+NoDisplay=true
+X-XDP-Autostart=com.github.AppManager
+""";
+                FileUtils.set_contents(autostart_file, content);
+                debug("Autostart file written to %s", autostart_file);
+            } catch (Error e) {
+                warning("Failed to write autostart file: %s", e.message);
             }
         }
 
