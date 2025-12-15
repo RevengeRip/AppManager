@@ -10,4 +10,4 @@ appimagetool/
 squashfs-root/
 squashfs-*.img
 build/
-
+.directory
