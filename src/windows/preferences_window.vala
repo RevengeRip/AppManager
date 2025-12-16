@@ -22,7 +22,7 @@ namespace AppManager {
             Object();
             this.settings = settings;
             this.set_title(I18n.tr("Preferences"));
-            this.set_default_size(500, 630);
+            this.set_default_size(500, 670);
             check_portal_availability.begin();
             build_ui();
         }
