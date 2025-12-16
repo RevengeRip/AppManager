@@ -27,6 +27,7 @@ namespace AppManager {
         private UpdateWorkflowState update_state = UpdateWorkflowState.READY_TO_CHECK;
         private Gee.HashSet<string> pending_update_keys;
         private Gee.HashMap<string, string> record_size_cache;
+        private Gee.HashSet<string> updating_records;
         private DetailsWindow? active_details_window;
         private const string SHORTCUTS_RESOURCE = "/com/github/AppManager/ui/main-window-shortcuts.ui";
         private const string APPDATA_RESOURCE = "/com/github/AppManager/com.github.AppManager.metainfo.xml";
@@ -51,6 +52,7 @@ namespace AppManager {
             this.updater = new Updater(registry, installer);
             this.pending_update_keys = new Gee.HashSet<string>();
             this.record_size_cache = new Gee.HashMap<string, string>();
+            this.updating_records = new Gee.HashSet<string>();
             this.active_details_window = null;
             this.app_rows = new Gee.ArrayList<Adw.PreferencesRow>();
             add_css_class("devel");
@@ -339,7 +341,14 @@ namespace AppManager {
                 suffix_box.set_valign(Gtk.Align.CENTER);
 
                 var state_key = record_state_key(record);
-                if (pending_update_keys.contains(state_key)) {
+                if (updating_records.contains(state_key)) {
+                    var spinner = new Gtk.Spinner();
+                    spinner.set_size_request(16, 16);
+                    spinner.set_valign(Gtk.Align.CENTER);
+                    spinner.set_tooltip_text(I18n.tr("Updating..."));
+                    spinner.spinning = true;
+                    suffix_box.append(spinner);
+                } else if (pending_update_keys.contains(state_key)) {
                     var update_dot = new Gtk.Label("●");
                     update_dot.add_css_class("update-indicator");
                     update_dot.set_valign(Gtk.Align.CENTER);
@@ -697,8 +706,11 @@ namespace AppManager {
                 return;
             }
 
-            refresh_installations();
             set_update_button_state(UpdateWorkflowState.UPDATING);
+            foreach (var key in pending_update_keys) {
+                updating_records.add(key);
+            }
+            refresh_installations();
             new Thread<void>("appmgr-update", () => {
                 var results = updater.update_all();
                 Idle.add(() => {
@@ -710,6 +722,9 @@ namespace AppManager {
         }
 
         private void trigger_single_update(InstallationRecord record) {
+            var key = record_state_key(record);
+            updating_records.add(key);
+            refresh_installations();
             new Thread<void>("appmgr-update-single", () => {
                 var result = updater.update_single(record);
                 var payload = new Gee.ArrayList<UpdateResult>();
@@ -724,6 +739,7 @@ namespace AppManager {
 
         private void finalize_single_update(UpdateResult result) {
             var key = record_state_key(result.record);
+            updating_records.remove(key);
             if (result.status == UpdateStatus.UPDATED) {
                 pending_update_keys.remove(key);
                 record_size_cache.unset(result.record.id);
@@ -737,6 +753,7 @@ namespace AppManager {
             var remaining = new Gee.HashSet<string>();
             foreach (var result in results) {
                 var key = record_state_key(result.record);
+                updating_records.remove(key);
                 if (!pending_update_keys.contains(key)) {
                     continue;
                 }
