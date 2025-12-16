@@ -76,6 +76,15 @@ Examples:
 
         protected override void startup() {
             base.startup();
+
+            // Add bundled icons to the theme search path so symbolic update icon is always available
+            var display = Gdk.Display.get_default();
+            if (display != null) {
+                var theme = Gtk.IconTheme.get_for_display(display);
+                // Register bundled icons (hicolor layout) from the resource bundle
+                theme.add_resource_path("/com/github/AppManager/icons/hicolor");
+            }
+
             bg_update_service = new BackgroundUpdateService(settings, registry, installer);
             
             // Initialize directory monitoring for manual deletions
