@@ -259,8 +259,48 @@ namespace AppManager {
             });
             update_row.add_suffix(restore_update_button);
             
-            update_row.changed.connect(() => {
-                var new_val = update_row.text.strip();
+            // Normalize URL when user leaves the entry (focus out) or presses Enter
+            var focus_controller = new Gtk.EventControllerFocus();
+            focus_controller.leave.connect(() => {
+                var raw_val = update_row.text.strip();
+                // Normalize GitHub/GitLab URLs to project base
+                var normalized = Updater.normalize_update_url(raw_val);
+                var new_val = normalized ?? raw_val;
+                
+                // Update text field if normalization changed it
+                if (new_val != raw_val && new_val != "") {
+                    update_row.text = new_val;
+                }
+                
+                var original_val = record.original_update_link ?? "";
+                // Determine if value differs from original
+                if (new_val == original_val) {
+                    // Matches original, clear custom
+                    record.custom_update_link = null;
+                } else if (new_val == "") {
+                    // User cleared the value, mark as CLEARED
+                    record.custom_update_link = CLEARED_VALUE;
+                } else {
+                    // Custom value set
+                    record.custom_update_link = new_val;
+                }
+                registry.register(record);
+                update_desktop_file_property(record.desktop_file, "X-AppImage-UpdateURL", new_val);
+                restore_update_button.set_visible(record.custom_update_link != null);
+            });
+            update_row.add_controller(focus_controller);
+            
+            update_row.entry_activated.connect(() => {
+                var raw_val = update_row.text.strip();
+                // Normalize GitHub/GitLab URLs to project base
+                var normalized = Updater.normalize_update_url(raw_val);
+                var new_val = normalized ?? raw_val;
+                
+                // Update text field if normalization changed it
+                if (new_val != raw_val && new_val != "") {
+                    update_row.text = new_val;
+                }
+                
                 var original_val = record.original_update_link ?? "";
                 // Determine if value differs from original
                 if (new_val == original_val) {
