@@ -389,10 +389,19 @@ namespace AppManager.Core {
                 var stored_icon = Path.build_filename(AppPaths.icons_dir, "%s%s".printf(icon_name_for_desktop, icon_extension));
                 Utils.FileUtils.file_copy(icon_path, stored_icon);
                 
+                // Derive fallback StartupWMClass from bundled desktop file name (without .desktop extension)
+                string fallback_startup_wm_class;
+                var bundled_desktop_basename = Path.get_basename(desktop_path);
+                if (bundled_desktop_basename.has_suffix(".desktop")) {
+                    fallback_startup_wm_class = bundled_desktop_basename.substring(0, bundled_desktop_basename.length - 8);
+                } else {
+                    fallback_startup_wm_class = bundled_desktop_basename;
+                }
+                
                 // Store original values temporarily in record for get_effective_* methods to work
                 record.original_icon_name = icon_name_for_desktop;
                 record.original_keywords = original_keywords;
-                record.original_startup_wm_class = original_startup_wm_class ?? "appmanager-%s".printf(final_slug);
+                record.original_startup_wm_class = original_startup_wm_class ?? fallback_startup_wm_class;
                 record.original_commandline_args = original_exec_args;
                 record.original_update_link = original_update_url;
                 record.original_web_page = original_homepage;
