@@ -29,7 +29,16 @@ AppManager is a GTK/Libadwaita developed desktop utility in Vala that makes inst
 - Libraries: `libadwaita-1`, `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`, `libportal` (>= 0.6), `libportal-gtk4` (>= 0.6)
 - Runtime tools: `7z`/`p7zip-full`, `dwarfs`, `dwarfsextract`
 
-## Build & Install
+## Install
+
+[Download](https://github.com/kem-a/AppManager/releases) latest app version and run self install, for example:
+
+```sh
+chmod +x app-manager-1.0.0-beta-x86_64.AppImage
+./app-manager-1.0.0-beta-x86_64.AppImage --install app-manager-1.0.0-beta-x86_64.AppImage
+```
+
+## Build
 
 <details> <summary> <H4>Install development dependencies</H4> <b>(click to open)</b> </summary>
 
