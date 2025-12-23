@@ -175,11 +175,17 @@ jobs:
           # Copy installed files
           cp -a "$DESTDIR/usr" "$APPDIR/"
 
+          # Move dwarfs tools to bin for easier discovery in AppImage
+          find "$APPDIR/usr/lib" -name dwarfsextract -exec mv {} "$APPDIR/usr/bin/" \;
+          find "$APPDIR/usr/lib" -name dwarfsck -exec mv {} "$APPDIR/usr/bin/" \;
+
           # Create AppRun script that sets up environment for GSettings schemas
           printf '%s\n' '#!/bin/bash' \
             'HERE="$(dirname "$(readlink -f "$0")")"' \
+            'export APPDIR="$HERE"' \
             'export GSETTINGS_SCHEMA_DIR="$HERE/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR:-}"' \
             'export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"' \
+            'export PATH="$HERE/usr/bin:$PATH"' \
             'exec "$HERE/usr/bin/app-manager" "$@"' > "$APPDIR/AppRun"
           chmod +x "$APPDIR/AppRun"
 

@@ -40,7 +40,19 @@ namespace AppManager.Core {
 
             // Build-time bundle dir (e.g., /usr/lib/app-manager/dwarfs)
             if (DWARFS_BUNDLE_DIR != null && DWARFS_BUNDLE_DIR.strip() != "") {
-                candidates.add(DWARFS_BUNDLE_DIR.strip());
+                var bundle_dir = DWARFS_BUNDLE_DIR.strip();
+                candidates.add(bundle_dir);
+
+                // If running in AppImage, check relative to APPDIR
+                var appdir = Environment.get_variable("APPDIR");
+                if (appdir != null && appdir != "") {
+                    var relative_bundle_dir = bundle_dir;
+                    if (relative_bundle_dir.has_prefix("/")) {
+                        relative_bundle_dir = relative_bundle_dir.substring(1);
+                    }
+                    candidates.add(Path.build_filename(appdir, relative_bundle_dir));
+                    candidates.add(Path.build_filename(appdir, "usr", "bin"));
+                }
             }
 
             // System-wide bundle locations
