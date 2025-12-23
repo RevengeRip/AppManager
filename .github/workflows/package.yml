@@ -175,8 +175,13 @@ jobs:
           # Copy installed files
           cp -a "$DESTDIR/usr" "$APPDIR/"
 
-          # AppRun is the binary itself for simple GTK4/Libadwaita apps
-          install -Dm755 "$DESTDIR/usr/bin/app-manager" "$APPDIR/AppRun"
+          # Create AppRun script that sets up environment for GSettings schemas
+          printf '%s\n' '#!/bin/bash' \
+            'HERE="$(dirname "$(readlink -f "$0")")"' \
+            'export GSETTINGS_SCHEMA_DIR="$HERE/usr/share/glib-2.0/schemas:${GSETTINGS_SCHEMA_DIR:-}"' \
+            'export XDG_DATA_DIRS="$HERE/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"' \
+            'exec "$HERE/usr/bin/app-manager" "$@"' > "$APPDIR/AppRun"
+          chmod +x "$APPDIR/AppRun"
 
           # Desktop and icon at AppDir root
           install -Dm644 "$DESTDIR/usr/share/applications/com.github.AppManager.desktop" "$APPDIR/com.github.AppManager.desktop"
