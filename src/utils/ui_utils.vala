@@ -184,18 +184,8 @@ namespace AppManager.Utils {
         }
 
         public static Gdk.RGBA get_accent_background_color() {
-            var fallback = parse_color("#3584e4");
-            var style_manager = Adw.StyleManager.get_default();
-            if (style_manager == null) {
-                return fallback;
-            }
-
-            var accent_rgba = style_manager.get_accent_color_rgba();
-            if (accent_rgba != null) {
-                return accent_rgba;
-            }
-
-            return style_manager.get_accent_color().to_rgba();
+            // Use GNOME default blue accent as fallback - accent color API requires libadwaita 1.6+
+            return parse_color("#3584e4");
         }
 
         public static Gdk.RGBA get_accent_foreground_color(Gdk.RGBA accent_bg) {
