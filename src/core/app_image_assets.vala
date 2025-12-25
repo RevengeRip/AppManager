@@ -20,6 +20,15 @@ namespace AppManager.Core {
         }
     }
 
+    /**
+     * Internal helper for DwarFS-based AppImage extraction.
+     * 
+     * Methods in this class use the "try-pattern": they return false/null on failure
+     * rather than throwing exceptions. This allows callers to implement fallback logic
+     * (e.g., try 7z first, then DwarFS) without exception handling overhead.
+     * 
+     * When tools are unavailable, a warning is logged once per session.
+     */
     internal class DwarfsTools : Object {
         private static bool checked_tools = false;
         private static bool available_cache = false;
@@ -106,8 +115,13 @@ namespace AppManager.Core {
             warning("DwarFS tools not found. Install or place dwarfsextract/dwarfsck in PATH, APP_MANAGER_DWARFS_DIR, /usr/lib/app-manager, or ~/.local/share/app-manager/dwarfs for DwarFS AppImages.");
         }
 
+        /**
+         * Extracts files matching pattern from a DwarFS archive.
+         * Returns false if tools unavailable or extraction fails.
+         */
         public static bool extract_entry(string archive, string output_dir, string pattern) {
             if (!available()) {
+                log_missing_once();
                 return false;
             }
 
@@ -134,12 +148,21 @@ namespace AppManager.Core {
             }
         }
 
+        /**
+         * Extracts entire DwarFS archive contents.
+         * Returns false if tools unavailable or extraction fails.
+         */
         public static bool extract_all(string archive, string output_dir) {
             return extract_entry(archive, output_dir, "*");
         }
 
+        /**
+         * Lists all paths in a DwarFS archive.
+         * Returns null if tools unavailable or listing fails.
+         */
         public static Gee.ArrayList<string>? list_paths(string archive) {
             if (!available()) {
+                log_missing_once();
                 return null;
             }
 
@@ -463,9 +486,6 @@ namespace AppManager.Core {
                 extraction_successful(output_dir, pattern)) {
                 return true;
             }
-            if (!DwarfsTools.available()) {
-                DwarfsTools.log_missing_once();
-            }
             return false;
         }
 
@@ -497,13 +517,7 @@ namespace AppManager.Core {
                 return paths;
             }
             var dwarfs_paths = DwarfsTools.list_paths(appimage_path);
-            if (dwarfs_paths != null) {
-                return dwarfs_paths;
-            }
-            if (!DwarfsTools.available()) {
-                DwarfsTools.log_missing_once();
-            }
-            return null;
+            return dwarfs_paths;
         }
 
         private static Gee.ArrayList<string>? list_archive_paths_7z(string appimage_path) {
