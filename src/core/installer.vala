@@ -263,6 +263,7 @@ namespace AppManager.Core {
                 }
                 record.name = desktop_name;
                 record.version = desktop_version;
+                record.is_terminal = is_terminal_app;
                 
                 // For fresh installs or upgrades, apply history now that we have the real app name
                 // This restores user's custom settings if they uninstalled and are reinstalling,

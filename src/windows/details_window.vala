@@ -89,7 +89,6 @@ namespace AppManager {
             
             // Load desktop file properties early for Terminal and NoDisplay checks
             var desktop_props = load_desktop_file_properties(record.desktop_file);
-            var exec_from_desktop = desktop_props.get("Exec") ?? "";
             var exec_path = installer.resolve_exec_path_for_record(record);
             
             // Cards group - adding box directly without PreferencesRow wrapper
@@ -128,9 +127,8 @@ namespace AppManager {
             var size_card = create_info_card(UiUtils.format_size(size));
             cards_box.append(size_card);
             
-            // Terminal app card (only show if Terminal=true)
-            var terminal_value = desktop_props.get("Terminal") ?? "false";
-            if (terminal_value.down() == "true") {
+            // Terminal app card (only show if is_terminal)
+            if (record.is_terminal) {
                 var terminal_card = create_info_card(I18n.tr("Terminal"));
                 terminal_card.add_css_class("terminal");
                 cards_box.append(terminal_card);
@@ -151,11 +149,11 @@ namespace AppManager {
             var props_group = new Adw.PreferencesGroup();
             props_group.title = I18n.tr("Properties");
             
-            // Extract current values from desktop file
-            var current_args = extract_exec_args(exec_from_desktop);
-            var current_icon = desktop_props.get("Icon") ?? "";
-            var current_keywords = desktop_props.get("Keywords") ?? "";
-            var current_wmclass = desktop_props.get("StartupWMClass") ?? "";
+            // Get current values from record (effective = custom if set, otherwise original)
+            var current_args = record.get_effective_commandline_args() ?? "";
+            var current_icon = record.get_effective_icon_name() ?? "";
+            var current_keywords = record.get_effective_keywords() ?? "";
+            var current_wmclass = record.get_effective_startup_wm_class() ?? "";
             
             // Command line arguments (loaded from .desktop file)
             var exec_row = new Adw.EntryRow();
@@ -499,7 +497,7 @@ namespace AppManager {
                 symlink_name = Path.get_basename(record.installed_path);
             }
 
-            bool is_terminal_app = (desktop_props.get("Terminal") ?? "false").down() == "true";
+            bool is_terminal_app = record.is_terminal;
             bool symlink_exists = record.bin_symlink != null && record.bin_symlink.strip() != "" && File.new_for_path(record.bin_symlink).query_exists();
 
             // Terminal apps must always stay on PATH; ensure the symlink exists using Installer helper
@@ -589,7 +587,7 @@ namespace AppManager {
             extract_button.width_request = 200;
             extract_button.hexpand = false;
             // Enable only for non-terminal, portable installs
-            var can_extract = record.mode == InstallMode.PORTABLE && (desktop_props.get("Terminal") ?? "false").down() != "true";
+            var can_extract = record.mode == InstallMode.PORTABLE && !record.is_terminal;
             extract_button.sensitive = can_extract;
             extract_button.clicked.connect(() => {
                 present_extract_warning();
@@ -740,48 +738,18 @@ namespace AppManager {
                 var keyfile = new KeyFile();
                 keyfile.load_from_file(desktop_file_path, KeyFileFlags.NONE);
                 
-                string[] keys = {"Exec", "Icon", "X-AppImage-Version", "StartupWMClass", "Keywords", "X-AppImage-Homepage", "X-AppImage-UpdateURL", "Terminal", "NoDisplay"};
-                foreach (var key in keys) {
-                    try {
-                        var value = keyfile.get_string("Desktop Entry", key);
-                        props.set(key, value);
-                    } catch (Error e) {
-                        // Key doesn't exist, that's okay
-                    }
+                // Only NoDisplay is not stored in InstallationRecord
+                try {
+                    var value = keyfile.get_string("Desktop Entry", "NoDisplay");
+                    props.set("NoDisplay", value);
+                } catch (Error e) {
+                    // Key doesn't exist, that's okay
                 }
             } catch (Error e) {
                 warning("Failed to load desktop file %s: %s", desktop_file_path, e.message);
             }
             
             return props;
-        }
-        
-        // Extract command line arguments from Exec field (everything after first token)
-        private string extract_exec_args(string exec_value) {
-            var trimmed = exec_value.strip();
-            if (trimmed.length == 0) {
-                return "";
-            }
-            
-            // Find first unquoted space
-            int first_space = -1;
-            bool in_quotes = false;
-            for (int i = 0; i < trimmed.length; i++) {
-                if (trimmed[i] == '"') {
-                    in_quotes = !in_quotes;
-                } else if (trimmed[i] == ' ' && !in_quotes) {
-                    first_space = i;
-                    break;
-                }
-            }
-            
-            if (first_space == -1) {
-                // No arguments
-                return "";
-            }
-            
-            // Return only the arguments part
-            return trimmed.substring(first_space + 1).strip();
         }
         
         private void present_extract_warning() {
