@@ -170,12 +170,12 @@ namespace AppManager {
 
             var warning_text = I18n.tr("Origins of %s application can not be verified. Are you sure you want to open it?").printf(resolved_app_name);
             var warning_markup = "<b>%s</b>".printf(GLib.Markup.escape_text(warning_text, -1));
-            dialog.append_body(create_wrapped_label(warning_markup, true));
+            dialog.append_body(UiUtils.create_wrapped_label(warning_markup, true));
             
             if (is_terminal_app) {
-                dialog.append_body(create_wrapped_label(I18n.tr("This is a terminal application and will be installed in portable mode."), false, true));
+                dialog.append_body(UiUtils.create_wrapped_label(I18n.tr("This is a terminal application and will be installed in portable mode."), false, true));
             } else {
-                dialog.append_body(create_wrapped_label(I18n.tr("Install the AppImage to add it to your applications."), false, true));
+                dialog.append_body(UiUtils.create_wrapped_label(I18n.tr("Install the AppImage to add it to your applications."), false, true));
             }
 
             dialog.add_option("install", I18n.tr("Install"));
@@ -439,12 +439,12 @@ namespace AppManager {
                 dialog.append_body(warning_icon);
                 if (record.version != null && resolved_app_version != null) {
                     var versions = I18n.tr("Installed: %s | Incoming: %s").printf(record.version, resolved_app_version);
-                    dialog.append_body(create_wrapped_label(GLib.Markup.escape_text(versions, -1), true, true));
+                    dialog.append_body(UiUtils.create_wrapped_label(GLib.Markup.escape_text(versions, -1), true, true));
                 }
             } else {
                 replace_text = I18n.tr("An item named %s already exists in this location. Do you want to replace it with one you're copying?").printf(record.name);
             }
-            dialog.append_body(create_wrapped_label(GLib.Markup.escape_text(replace_text, -1), true));
+            dialog.append_body(UiUtils.create_wrapped_label(GLib.Markup.escape_text(replace_text, -1), true));
             var stop_is_default = installed_newer;
             dialog.add_option("stop", I18n.tr("Stop"), stop_is_default);
             dialog.add_option("replace", I18n.tr("Replace"), !stop_is_default);
@@ -463,24 +463,6 @@ namespace AppManager {
             });
 
             dialog.present();
-        }
-
-        private Gtk.Label create_wrapped_label(string text, bool use_markup = false, bool dim = false) {
-            var label = new Gtk.Label(null);
-            label.wrap = true;
-            label.set_wrap_mode(Pango.WrapMode.WORD_CHAR);
-            label.halign = Gtk.Align.CENTER;
-            label.justify = Gtk.Justification.CENTER;
-            label.use_markup = use_markup;
-            if (use_markup) {
-                label.set_markup(text);
-            } else {
-                label.set_text(text);
-            }
-            if (dim) {
-                label.add_css_class("dim-label");
-            }
-            return label;
         }
 
         private enum InstallIntent {
@@ -550,10 +532,10 @@ namespace AppManager {
 
             var dialog = new DialogWindow(app_ref, this, title, image);
             var app_name_markup = "<b>%s</b>".printf(GLib.Markup.escape_text(record.name, -1));
-            dialog.append_body(create_wrapped_label(app_name_markup, true));
+            dialog.append_body(UiUtils.create_wrapped_label(app_name_markup, true));
             
             var version_text = record.version ?? I18n.tr("Unknown version");
-            var version_label = create_wrapped_label(I18n.tr("Version %s").printf(version_text), false);
+            var version_label = UiUtils.create_wrapped_label(I18n.tr("Version %s").printf(version_text), false);
             version_label.add_css_class("dim-label");
             dialog.append_body(version_label);
             
@@ -577,7 +559,7 @@ namespace AppManager {
             var dialog = new DialogWindow(app_ref, this, title, error_icon);
             
             var body_markup = GLib.Markup.escape_text(message, -1);
-            dialog.append_body(create_wrapped_label(body_markup, true));
+            dialog.append_body(UiUtils.create_wrapped_label(body_markup, true));
             dialog.add_option("dismiss", I18n.tr("Dismiss"));
             dialog.present();
         }

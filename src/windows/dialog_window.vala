@@ -88,10 +88,10 @@ namespace AppManager {
             var app_name = record.name ?? record.installed_path;
             if (app_name != null && app_name.strip() != "") {
                 var markup = "<b>%s</b>".printf(GLib.Markup.escape_text(app_name, -1));
-                dialog.append_body(create_wrapped_label(markup, true));
+                dialog.append_body(UiUtils.create_wrapped_label(markup, true));
             }
 
-            dialog.append_body(create_wrapped_label(I18n.tr("The application was uninstalled successfully.")));
+            dialog.append_body(UiUtils.create_wrapped_label(I18n.tr("The application was uninstalled successfully.")));
             dialog.add_option("close", I18n.tr("Close"), true);
             dialog.present();
             return dialog;
@@ -108,21 +108,6 @@ namespace AppManager {
                 image.set_from_icon_name("application-x-executable");
             }
             return image;
-        }
-
-        private static Gtk.Label create_wrapped_label(string text, bool use_markup = false) {
-            var label = new Gtk.Label(null);
-            label.wrap = true;
-            label.set_wrap_mode(Pango.WrapMode.WORD_CHAR);
-            label.halign = Gtk.Align.CENTER;
-            label.justify = Gtk.Justification.CENTER;
-            label.use_markup = use_markup;
-            if (use_markup) {
-                label.set_markup(text);
-            } else {
-                label.set_text(text);
-            }
-            return label;
         }
     }
 }

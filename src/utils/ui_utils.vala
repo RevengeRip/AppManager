@@ -250,5 +250,23 @@ namespace AppManager.Utils {
             }
             return null;
         }
+
+        public static Gtk.Label create_wrapped_label(string text, bool use_markup = false, bool dim = false) {
+            var label = new Gtk.Label(null);
+            label.wrap = true;
+            label.set_wrap_mode(Pango.WrapMode.WORD_CHAR);
+            label.halign = Gtk.Align.CENTER;
+            label.justify = Gtk.Justification.CENTER;
+            label.use_markup = use_markup;
+            if (use_markup) {
+                label.set_markup(text);
+            } else {
+                label.set_text(text);
+            }
+            if (dim) {
+                label.add_css_class("dim-label");
+            }
+            return label;
+        }
     }
 }
