@@ -482,7 +482,12 @@ namespace AppManager {
             path_row.subtitle = I18n.tr("Create a launcher in ~/.local/bin so you can run it from the terminal");
 
             var symlink_name = "";
-            if (record.installed_path != null && record.installed_path.strip() != "") {
+
+            if (record.entry_exec != null && record.entry_exec.strip() != "") {
+                symlink_name = Path.get_basename(record.entry_exec.strip());
+            }
+
+            if (symlink_name == "" && record.installed_path != null && record.installed_path.strip() != "") {
                 symlink_name = installer.derive_slug_from_path(record.installed_path, record.mode == InstallMode.EXTRACTED);
             }
             

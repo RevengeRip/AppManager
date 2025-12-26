@@ -294,6 +294,22 @@ namespace AppManager.Core {
             throw new AppImageAssetsError.ICON_FILE_MISSING("No icon file (.png, .svg, or .DirIcon) found in AppImage root");
         }
 
+        public static string? extract_apprun(string appimage_path, string temp_root) {
+            var apprun_root = Path.build_filename(temp_root, "apprun");
+            try {
+                DirUtils.create_with_parents(apprun_root, 0755);
+                if (try_extract_entry(appimage_path, apprun_root, "AppRun")) {
+                    var apprun_path = Path.build_filename(apprun_root, "AppRun");
+                    if (File.new_for_path(apprun_path).query_exists()) {
+                        return resolve_symlink(apprun_path, appimage_path, apprun_root);
+                    }
+                }
+            } catch (Error e) {
+                warning("Failed to extract AppRun: %s", e.message);
+            }
+            return null;
+        }
+
         public static string ensure_apprun_present(string extracted_root) throws Error {
             var apprun_path = Path.build_filename(extracted_root, "AppRun");
             var apprun_file = File.new_for_path(apprun_path);

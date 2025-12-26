@@ -249,6 +249,13 @@ namespace AppManager.Core {
             try {
                 var desktop_path = AppImageAssets.extract_desktop_entry(assets_path, temp_dir);
                 var icon_path = AppImageAssets.extract_icon(assets_path, temp_dir);
+                
+                // Try to extract AppRun if not provided (for portable mode)
+                string? effective_app_run = app_run_path;
+                if (effective_app_run == null) {
+                    effective_app_run = AppImageAssets.extract_apprun(assets_path, temp_dir);
+                }
+
                 string desktop_name = metadata.display_name;
                 string? desktop_version = null;
                 bool is_terminal_app = false;
@@ -325,7 +332,7 @@ namespace AppManager.Core {
                 
                 var exec_value = desktop_entry.exec;
                 var original_exec_args = exec_value != null ? DesktopEntry.extract_exec_arguments(exec_value) : null;
-                resolved_entry_exec = exec_value != null ? DesktopEntry.resolve_exec_from_desktop(exec_value, app_run_path) : null;
+                resolved_entry_exec = exec_value != null ? DesktopEntry.resolve_exec_from_desktop(exec_value, effective_app_run) : null;
                 
                 // Derive icon name without path and extension
                 var icon_name_for_desktop = derive_icon_name(original_icon_name, final_slug);
@@ -381,6 +388,11 @@ namespace AppManager.Core {
                 if (is_terminal_app || record.original_startup_wm_class == Core.APPLICATION_ID) {
                     progress("Creating symlink for application…");
                     var symlink_name = final_slug;
+
+                    if (resolved_entry_exec != null && resolved_entry_exec.strip() != "") {
+                        symlink_name = Path.get_basename(resolved_entry_exec.strip());
+                    }
+
                     if (record.original_startup_wm_class == Core.APPLICATION_ID) {
                         symlink_name = "app-manager";
                     }

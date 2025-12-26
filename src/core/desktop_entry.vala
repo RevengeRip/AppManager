@@ -247,11 +247,6 @@ namespace AppManager.Core {
                 }
             }
             
-            // Fallback to AppRun
-            if (normalized_exec != null && is_apprun_token(normalized_exec)) {
-                return "AppRun";
-            }
-            
             return null;
         }
 
