@@ -758,11 +758,14 @@ namespace AppManager {
             var home_bin = AppPaths.local_bin_dir;
             var local_bin_suffix = "/" + LOCAL_BIN_DIRNAME;
             
-            // Check shell's login PATH (handles desktop launches)
+            // Use user's actual shell to check PATH
+            var shell = Environment.get_variable("SHELL") ?? "/bin/sh";
+            
             try {
                 string std_out;
                 int exit_status;
-                Process.spawn_command_line_sync("sh -l -c 'echo $PATH'", out std_out, null, out exit_status);
+                string[] argv = { shell, "-l", "-c", "echo $PATH" };
+                Process.spawn_sync(null, argv, null, SpawnFlags.SEARCH_PATH, null, out std_out, null, out exit_status);
                 
                 if (exit_status == 0 && std_out != null) {
                     foreach (var segment in std_out.split(":")) {
