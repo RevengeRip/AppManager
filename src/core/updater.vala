@@ -618,13 +618,17 @@ namespace AppManager.Core {
                 record_downloading(record);
 
                 var download = download_file(source.url, cancellable);
+                InstallationRecord? new_record = null;
                 try {
-                    installer.upgrade(download.file_path, record);
+                    new_record = installer.upgrade(download.file_path, record);
                 } finally {
                     AppManager.Utils.FileUtils.remove_dir_recursive(download.temp_dir);
                 }
 
-                record.etag = current;
+                // Store the new etag on the new record (upgrade returns a new record)
+                if (new_record != null) {
+                    new_record.etag = current;
+                }
                 registry.persist();
                 record_succeeded(record);
                 log_update_event(record, "UPDATED", "direct url etag=%s".printf(current));
