@@ -167,14 +167,14 @@ jobs:
           chrpath -d "$APPDIR/usr/bin/app-manager" 2>/dev/null || true
 
           # Build AppImage
-          ARCH=${{ matrix.arch }} appimagetool "$APPDIR" "$PACKAGE_DIR/app-manager-${VERSION}-${{ matrix.arch }}.AppImage"
+          ARCH=${{ matrix.arch }} appimagetool "$APPDIR" "$PACKAGE_DIR/AppManager-${VERSION}-${{ matrix.arch }}.AppImage"
 
       - name: Upload release packages
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            packages/app-manager-${{ steps.meta.outputs.version }}-${{ matrix.arch }}.AppImage
+            packages/AppManager-${{ steps.meta.outputs.version }}-${{ matrix.arch }}.AppImage
 
       - name: Upload artifacts (for non-release builds)
         if: "!startsWith(github.ref, 'refs/tags/')"

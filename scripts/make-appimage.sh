@@ -31,7 +31,7 @@ ARCH=$(uname -m)
 
 # Output
 PACKAGE_DIR="$PROJECT_DIR"
-APPIMAGE_NAME="$BINARY_NAME-${VERSION}-${ARCH}.AppImage"
+APPIMAGE_NAME="$APP_NAME-${VERSION}-${ARCH}.AppImage"
 
 echo "=== Building AppImage for $APP_NAME v$VERSION ==="
 echo "Build directory: $BUILD_DIR"

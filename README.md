@@ -32,11 +32,12 @@ AppManager is a GTK/Libadwaita developed desktop utility in Vala that makes inst
 
 ## Install
 
-[Download](https://github.com/kem-a/AppManager/releases) latest app version and run self install, for example:
+Simply [download](https://github.com/kem-a/AppManager/releases) latest app version, enable execute and double click to install it.
 
+Can also install from terminal:
 ```sh
-chmod +x app-manager-1.0.0-beta-x86_64.AppImage
-./app-manager-1.0.0-beta-x86_64.AppImage --install app-manager-1.0.0-beta-x86_64.AppImage
+chmod +x AppManager-1.0.0-beta-x86_64.AppImage
+./AppManager-1.0.0-beta-x86_64.AppImage --install AppManager-1.0.0-beta-x86_64.AppImage
 ```
 
 ## Build
