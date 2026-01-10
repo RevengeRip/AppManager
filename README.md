@@ -11,6 +11,7 @@
 
 AppManager is a GTK/Libadwaita developed desktop utility in Vala that makes installing and uninstalling AppImages on Linux desktop painless. Double-click any `.AppImage` to open a macOS-style drag-and-drop window, just drag to install and AppManager will move the app, wire up desktop entries, and copy icons.
 
+<img width="1600" height="1237" alt="Screenshot From 2026-01-11 00-24-35" src="https://github.com/user-attachments/assets/acc7d1b8-6e07-4540-af6c-cf3167345252" />
 
 
 
