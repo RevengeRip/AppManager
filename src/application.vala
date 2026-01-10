@@ -157,13 +157,19 @@ Examples:
         }
 
         protected override void activate() {
+            // Check integrity on app launch to detect manual deletions while app was closed
+            var orphaned = registry.reconcile_with_filesystem();
+            if (orphaned.size > 0) {
+                debug("Found %d orphaned installation(s) on launch", orphaned.size);
+            }
+
+            // Self-install: if running as AppImage and not yet installed, show installer
+            if (AppPaths.is_running_as_appimage && !is_self_installed()) {
+                show_self_install_window();
+                return;
+            }
+
             if (main_window == null) {
-                // Check integrity on app launch to detect manual deletions while app was closed
-                var orphaned = registry.reconcile_with_filesystem();
-                if (orphaned.size > 0) {
-                    debug("Found %d orphaned installation(s) on launch", orphaned.size);
-                }
-                
                 main_window = new MainWindow(this, registry, installer, settings);
 
                 if (settings.get_boolean("auto-check-updates") && !settings.get_boolean("background-permission-requested")) {
@@ -191,6 +197,58 @@ Examples:
             } catch (Error e) {
                 critical("Failed to open drop window: %s", e.message);
                 this.activate();
+            }
+        }
+
+        /**
+         * Checks if AppManager itself is installed (when running as AppImage).
+         */
+        private bool is_self_installed() {
+            var appimage = AppPaths.appimage_path;
+            if (appimage == null) {
+                return true; // Not an AppImage, consider "installed"
+            }
+            try {
+                var checksum = Utils.FileUtils.compute_checksum(appimage);
+                return registry.is_installed_checksum(checksum);
+            } catch (Error e) {
+                warning("Failed to compute checksum for self-install check: %s", e.message);
+                return true; // On error, don't block the user
+            }
+        }
+
+        /**
+         * Shows the installer window for self-installation.
+         */
+        private void show_self_install_window() {
+            var appimage = AppPaths.appimage_path;
+            if (appimage == null) {
+                activate();
+                return;
+            }
+            try {
+                debug("Opening self-install window for %s", appimage);
+                var window = new DropWindow(this, registry, installer, settings, appimage);
+                // After successful install, show the main window
+                window.close_request.connect(() => {
+                    // Check if we're now installed
+                    if (is_self_installed()) {
+                        // Re-activate to show main window
+                        Idle.add(() => {
+                            activate();
+                            return Source.REMOVE;
+                        });
+                    }
+                    return false; // Allow window to close
+                });
+                window.present();
+            } catch (Error e) {
+                critical("Failed to open self-install window: %s", e.message);
+                // Fall back to main window
+                if (main_window == null) {
+                    main_window = new MainWindow(this, registry, installer, settings);
+                }
+                main_window.present();
             }
         }
 

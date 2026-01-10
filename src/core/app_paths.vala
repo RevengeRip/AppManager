@@ -1,5 +1,27 @@
 namespace AppManager.Core {
     public class AppPaths {
+        /**
+         * Returns the AppImage path if running as an AppImage, null otherwise.
+         */
+        public static string? appimage_path {
+            owned get {
+                var path = Environment.get_variable("APPIMAGE");
+                if (path != null && path.strip() != "") {
+                    return path;
+                }
+                return null;
+            }
+        }
+
+        /**
+         * Returns true if the application is running as an AppImage.
+         */
+        public static bool is_running_as_appimage {
+            get {
+                return appimage_path != null;
+            }
+        }
+
         public static string data_dir {
             owned get {
                 var dir = Path.build_filename(Environment.get_user_data_dir(), DATA_DIRNAME);
