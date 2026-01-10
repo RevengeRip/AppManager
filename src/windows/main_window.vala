@@ -1,9 +1,6 @@
 using AppManager.Core;
 using AppManager.Utils;
 
-[CCode (cname = "adw_about_dialog_new_from_appdata")]
-extern Adw.Dialog about_dialog_new_from_appdata_raw(string resource_path, string? release_notes_version);
-
 namespace AppManager {
     public class MainWindow : Adw.Window {
         private Application app_ref;
@@ -18,7 +15,6 @@ namespace AppManager {
         private Gtk.Label empty_state_label;
         private Gee.ArrayList<Adw.PreferencesRow> app_rows;
         private Gtk.ShortcutsWindow? shortcuts_window;
-        private Adw.AboutDialog? about_dialog;
         private Adw.NavigationView navigation_view;
         private Adw.ToastOverlay toast_overlay;
         private Gtk.Button? update_button;
@@ -1076,11 +1072,9 @@ namespace AppManager {
         }
 
         public void present_about_dialog() {
-            if (about_dialog == null) {
-                about_dialog = (Adw.AboutDialog) about_dialog_new_from_appdata_raw(APPDATA_RESOURCE, null);
-                about_dialog.version = APPLICATION_VERSION;
-            }
-            about_dialog.present(this);
+            var dialog = new Adw.AboutDialog.from_appdata(APPDATA_RESOURCE, null);
+            dialog.version = APPLICATION_VERSION;
+            dialog.present(this);
         }
 
         private void show_detail_page(InstallationRecord record) {
