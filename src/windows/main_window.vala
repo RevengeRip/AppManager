@@ -82,6 +82,15 @@ namespace AppManager {
 
             apps_group = new Adw.PreferencesGroup();
             apps_group.title = I18n.tr("My Apps");
+            
+            // Add refresh button next to title
+            refresh_button = new Gtk.Button();
+            refresh_button.icon_name = "view-refresh-symbolic";
+            refresh_button.tooltip_text = I18n.tr("Refresh app list");
+            refresh_button.add_css_class("flat");
+            refresh_button.clicked.connect(on_refresh_clicked);
+            apps_group.set_header_suffix(refresh_button);
+            
             general_page.add(apps_group);
 
             empty_state_box = build_empty_state();
@@ -450,12 +459,6 @@ namespace AppManager {
                 search_button.icon_name = "system-search-symbolic";
                 search_button.tooltip_text = I18n.tr("Search");
                 header.pack_start(search_button);
-
-                refresh_button = new Gtk.Button();
-                refresh_button.icon_name = "view-refresh-symbolic";
-                refresh_button.tooltip_text = I18n.tr("Refresh app list");
-                refresh_button.clicked.connect(on_refresh_clicked);
-                header.pack_start(refresh_button);
 
                 main_menu_button = new Gtk.MenuButton();
                 main_menu_button.set_icon_name("open-menu-symbolic");
