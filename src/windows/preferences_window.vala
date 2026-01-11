@@ -5,7 +5,6 @@ namespace AppManager {
     public class PreferencesDialog : Adw.PreferencesDialog {
         private GLib.Settings settings;
         private int[] update_interval_options = { 86400, 604800, 2592000 };
-        private bool portal_available = false;
         private Adw.SwitchRow? auto_check_row = null;
         private Adw.ComboRow? interval_row = null;
         private const string GTK_CONFIG_SUBDIR = "gtk-4.0";
@@ -24,7 +23,6 @@ namespace AppManager {
             this.settings = settings;
             this.set_title(I18n.tr("Preferences"));
             this.content_height = 660;
-            check_portal_availability.begin();
             build_ui();
         }
 
@@ -144,49 +142,13 @@ namespace AppManager {
             apply_thumbnail_background_preference(settings.get_boolean("remove-thumbnail-checkerboard"));
         }
 
-        private async void check_portal_availability() {
-            try {
-                var connection = yield Bus.get(BusType.SESSION);
-                var result = yield connection.call(
-                    "org.freedesktop.portal.Desktop",
-                    "/org/freedesktop/portal/desktop",
-                    "org.freedesktop.DBus.Introspectable",
-                    "Introspect",
-                    null,
-                    null,
-                    DBusCallFlags.NONE,
-                    -1,
-                    null
-                );
-                string xml;
-                result.get("(s)", out xml);
-                portal_available = xml.contains("org.freedesktop.portal.Background");
-            } catch (Error e) {
-                warning("Failed to check portal availability: %s", e.message);
-                portal_available = false;
-            }
-            
-            // Update UI after check completes
-            update_portal_ui_state();
-        }
-
-        private void update_portal_ui_state() {
-            if (auto_check_row == null || interval_row == null) {
-                return;
-            }
-            
-            if (!portal_available) {
-                auto_check_row.subtitle = I18n.tr("Background updates require the XDG portal, which is unavailable on this system.");
-                auto_check_row.sensitive = false;
-                interval_row.sensitive = false;
-            }
-        }
-
         private void handle_auto_update_toggle(bool enabled) {
             if (enabled) {
                 BackgroundUpdateService.write_autostart_file();
+                BackgroundUpdateService.spawn_daemon();
             } else {
                 BackgroundUpdateService.remove_autostart_file();
+                BackgroundUpdateService.kill_daemon();
             }
         }
 

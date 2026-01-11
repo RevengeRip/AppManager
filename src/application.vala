@@ -171,10 +171,6 @@ Examples:
 
             if (main_window == null) {
                 main_window = new MainWindow(this, registry, installer, settings);
-
-                if (settings.get_boolean("auto-check-updates") && !settings.get_boolean("background-permission-requested")) {
-                    request_background_updates.begin();
-                }
             }
             main_window.present();
         }
@@ -469,13 +465,6 @@ Examples:
             preferences_dialog.present(parent);
         }
 
-        private async void request_background_updates() {
-            if (bg_update_service == null) {
-                return;
-            }
-            yield bg_update_service.request_background_permission(main_window);
-        }
-
         private int run_background_update(GLib.ApplicationCommandLine command_line) {
             if (!settings.get_boolean("auto-check-updates")) {
                 debug("Auto-check updates disabled; exiting");
@@ -486,20 +475,8 @@ Examples:
                 bg_update_service = new BackgroundUpdateService(settings, registry, installer);
             }
 
-            if (!bg_update_service.should_check_now()) {
-                debug("Not time to check yet; exiting");
-                return 0;
-            }
-
-            var loop = new MainLoop();
-            var cancellable = new Cancellable();
-
-            bg_update_service.perform_background_check.begin(cancellable, (obj, res) => {
-                bg_update_service.perform_background_check.end(res);
-                loop.quit();
-            });
-
-            loop.run();
+            // Run as persistent daemon - this will block until session ends
+            bg_update_service.run_daemon();
             return 0;
         }
 

@@ -23,23 +23,17 @@ AppManager is a GTK/Libadwaita developed desktop utility in Vala that makes inst
 - **Simple uninstall**: Right click in app drawer and choose `Move to Trash`, can uninstall in AppManager or simply delete from `~/Applications` folder.
 - **Install registry + preferences**: Main window lists installed apps, default mode, and cleanup behaviors, all stored with GSettings.
 - **Auto update apps**: Automaticaly update apps from github, gitlab or from direct links. Simply add download URL.
-- **Background update checks**: Optional portal-backed checks with user-granted permission, interval control, and a notification when updates are found.
+- **Background update checks**: Optional automatic update checks with configurable interval (daily, weekly, monthly) and notifications when updates are found.
 
 ## Requirements
 
 - `valac`, `meson`, `ninja`
-- Libraries: `libadwaita-1` (>= 1.5),, `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`, `libportal` (>= 0.6), `libportal-gtk4` (>= 0.6)
+- Libraries: `libadwaita-1` (>= 1.5), `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`
 - Runtime tools: `7z`/`p7zip-full`, `dwarfs`, `dwarfsextract`
 
 ## Install
 
 Simply [download](https://github.com/kem-a/AppManager/releases) latest app version, enable execute and double click to install it.
-
-Can also install from terminal:
-```sh
-chmod +x AppManager-1.0.0-beta-x86_64.AppImage
-./AppManager-1.0.0-beta-x86_64.AppImage --install AppManager-1.0.0-beta-x86_64.AppImage
-```
 
 ## Build
 
@@ -50,19 +44,19 @@ Install the development packages required to build AppManager on each distributi
 - **Debian / Ubuntu:**
 
 ```bash
-sudo apt install valac meson ninja-build pkg-config libadwaita-1-dev libgtk-4-dev libglib2.0-dev libjson-glib-dev libgee-0.8-dev libgirepository1.0-dev libsoup-3.0-dev libportal-dev libportal-gtk4-dev p7zip-full
+sudo apt install valac meson ninja-build pkg-config libadwaita-1-dev libgtk-4-dev libglib2.0-dev libjson-glib-dev libgee-0.8-dev libgirepository1.0-dev libsoup-3.0-dev p7zip-full
 ```
 
 - **Fedora:**
 
 ```bash
-sudo dnf install vala meson ninja-build gtk4-devel libadwaita-devel glib2-devel json-glib-devel libgee-devel libsoup3-devel libportal-devel p7zip p7zip-plugins
+sudo dnf install vala meson ninja-build gtk4-devel libadwaita-devel glib2-devel json-glib-devel libgee-devel libsoup3-devel p7zip p7zip-plugins
 ```
 
 - **Arch Linux / Manjaro:**
 
 ```bash
-sudo pacman -S vala meson ninja gtk4 libadwaita glib2 json-glib gee libsoup libportal p7zip
+sudo pacman -S vala meson ninja gtk4 libadwaita glib2 json-glib gee libsoup p7zip
 ```
 </details>
 

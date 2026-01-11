@@ -8,4 +8,7 @@ namespace AppManager.Core {
     public const string DESKTOP_FILE_PREFIX = "appmanager";
     public const string SQUASHFS_ROOT_DIR = "squashfs-root";
     public const string LOCAL_BIN_DIRNAME = ".local/bin";
+
+    // Background update daemon check frequency (in seconds). Default: 1 hour. One lightweight timestamp comparison
+    public const uint DAEMON_CHECK_INTERVAL = 3600;
 }

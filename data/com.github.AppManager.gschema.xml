@@ -31,11 +31,6 @@
       <summary>Timestamp of last update check</summary>
       <description>Unix timestamp of the last successful background update check</description>
     </key>
-    <key name="background-permission-requested" type="b">
-      <default>false</default>
-      <summary>Whether background permission was already requested</summary>
-      <description>Tracks if the user was already prompted for background permission</description>
-    </key>
     <key name="remove-thumbnail-checkerboard" type="b">
       <default>false</default>
       <summary>Remove checkered background from thumbnails</summary>

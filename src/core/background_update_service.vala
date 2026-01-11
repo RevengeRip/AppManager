@@ -1,5 +1,4 @@
 using Gee;
-using Xdp;
 using GLib;
 
 namespace AppManager.Core {
@@ -7,7 +6,6 @@ namespace AppManager.Core {
         private GLib.Settings settings;
         private InstallationRegistry registry;
         private Updater updater;
-        private Xdp.Portal? portal;
         private string update_log_path;
 
         public BackgroundUpdateService(GLib.Settings settings, InstallationRegistry registry, Installer installer) {
@@ -15,44 +13,6 @@ namespace AppManager.Core {
             this.registry = registry;
             this.updater = new Updater(registry, installer);
             this.update_log_path = Path.build_filename(AppPaths.data_dir, "updates.log");
-        }
-
-        public async bool request_background_permission(GLib.Object? parent, Cancellable? cancellable = null) {
-            if (settings.get_boolean("background-permission-requested")) {
-                return true;
-            }
-
-            portal = new Xdp.Portal();
-
-            try {
-                var message = I18n.tr("AppManager needs permission to check for updates in the background");
-                
-                // Build the command list for autostart
-                var commandline = new GLib.GenericArray<weak string>();
-                var exec_path = AppPaths.current_executable_path ?? "app-manager";
-                commandline.add(exec_path);
-                commandline.add("--background-update");
-                
-                var granted = yield portal.request_background(
-                    null,
-                    message,
-                    commandline,
-                    Xdp.BackgroundFlags.AUTOSTART,
-                    cancellable
-                );
-                
-                if (granted) {
-                    // Portal creates the autostart file but doesn't populate Exec line
-                    // Write it ourselves to ensure it's complete
-                    write_autostart_file();
-                }
-                
-                settings.set_boolean("background-permission-requested", true);
-                return granted;
-            } catch (Error e) {
-                warning("Failed to request background permission: %s", e.message);
-                return false;
-            }
         }
 
         /**
@@ -99,6 +59,74 @@ X-XDP-Autostart=com.github.AppManager
                 } catch (Error e) {
                     warning("Failed to remove autostart file: %s", e.message);
                 }
+            }
+        }
+
+        /**
+         * Spawns the background daemon process if not already running.
+         * Called when user enables auto-updates in preferences.
+         */
+        public static void spawn_daemon() {
+            // Check if daemon is already running
+            if (is_daemon_running()) {
+                debug("Background daemon already running, not spawning another");
+                return;
+            }
+
+            try {
+                var exec_path = AppPaths.current_executable_path ?? "app-manager";
+                string[] argv = { exec_path, "--background-update" };
+                Pid child_pid;
+                Process.spawn_async(
+                    null,
+                    argv,
+                    null,
+                    GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                    null,
+                    out child_pid
+                );
+                debug("Spawned background daemon with PID %d", (int) child_pid);
+                
+                // Don't wait for the child - let it run independently
+                ChildWatch.add(child_pid, (pid, status) => {
+                    Process.close_pid(pid);
+                });
+            } catch (SpawnError e) {
+                warning("Failed to spawn background daemon: %s", e.message);
+            }
+        }
+
+        /**
+         * Kills any running background daemon process.
+         * Called when user disables auto-updates in preferences.
+         */
+        public static void kill_daemon() {
+            try {
+                // Use pkill with SIGKILL (-9) to ensure the daemon is terminated
+                // Match just "--background-update" to avoid issues with path variations
+                // Use "--" to indicate end of options since pattern starts with "-"
+                string[] argv = { "pkill", "-9", "-f", "--", "--background-update" };
+                int exit_status;
+                Process.spawn_sync(null, argv, null, GLib.SpawnFlags.SEARCH_PATH, null, null, null, out exit_status);
+                debug("Killed background daemon (exit status: %d)", exit_status);
+            } catch (SpawnError e) {
+                warning("Failed to kill background daemon: %s", e.message);
+            }
+        }
+
+        /**
+         * Checks if the background daemon is already running.
+         */
+        private static bool is_daemon_running() {
+            try {
+                // Match just "--background-update" to avoid issues with path variations
+                // Use "--" to indicate end of options since pattern starts with "-"
+                string[] argv = { "pgrep", "-f", "--", "--background-update" };
+                int exit_status;
+                Process.spawn_sync(null, argv, null, GLib.SpawnFlags.SEARCH_PATH, null, null, null, out exit_status);
+                return exit_status == 0;
+            } catch (SpawnError e) {
+                return false;
             }
         }
 
@@ -155,6 +183,42 @@ X-XDP-Autostart=com.github.AppManager
             int interval = settings.get_int("update-check-interval");
 
             return (now - last_check) >= interval;
+        }
+
+        /**
+         * Runs a persistent background daemon that periodically checks for updates.
+         * This method blocks and runs a GLib main loop until the process is terminated.
+         */
+        public void run_daemon() {
+            log_debug("background daemon: starting persistent service");
+
+            // Check immediately on startup if interval has elapsed
+            if (should_check_now()) {
+                log_debug("background daemon: interval elapsed, checking now");
+                perform_background_check.begin(null);
+            } else {
+                log_debug("background daemon: not yet time to check, waiting");
+            }
+
+            // Check periodically whether we should perform an update check
+            // This allows the daemon to respect interval changes without restart
+            Timeout.add_seconds(DAEMON_CHECK_INTERVAL, () => {
+                if (!settings.get_boolean("auto-check-updates")) {
+                    log_debug("background daemon: auto-check disabled, skipping");
+                    return Source.CONTINUE;
+                }
+
+                if (should_check_now()) {
+                    log_debug("background daemon: interval elapsed, checking now");
+                    perform_background_check.begin(null);
+                }
+
+                return Source.CONTINUE;
+            });
+
+            // Run the main loop - this blocks until the session ends
+            var loop = new MainLoop();
+            loop.run();
         }
 
         private void log_debug(string message) {
