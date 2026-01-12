@@ -41,6 +41,9 @@ namespace AppManager.Core {
         public string? custom_startup_wm_class { get; set; }
         public string? custom_update_link { get; set; }
         public string? custom_web_page { get; set; }
+        
+        // Environment variables as array of "NAME=VALUE" strings (max 5)
+        public string[]? custom_env_vars { get; set; }
 
         public InstallationRecord(string id, string name, InstallMode mode) {
             Object(id: id, name: name, mode: mode, installed_at: (int64)GLib.get_real_time());
@@ -89,7 +92,8 @@ namespace AppManager.Core {
                    custom_icon_name != null ||
                    custom_startup_wm_class != null ||
                    custom_update_link != null ||
-                   custom_web_page != null;
+                   custom_web_page != null ||
+                   (custom_env_vars != null && custom_env_vars.length > 0);
         }
 
         public Json.Node to_json() {
@@ -169,6 +173,14 @@ namespace AppManager.Core {
                 builder.set_member_name("custom_web_page");
                 builder.add_string_value(custom_web_page);
             }
+            if (custom_env_vars != null && custom_env_vars.length > 0) {
+                builder.set_member_name("custom_env_vars");
+                builder.begin_array();
+                foreach (var env_var in custom_env_vars) {
+                    builder.add_string_value(env_var);
+                }
+                builder.end_array();
+            }
             
             builder.end_object();
             return builder.get_root();
@@ -208,6 +220,14 @@ namespace AppManager.Core {
             if (custom_web_page != null) {
                 builder.set_member_name("custom_web_page");
                 builder.add_string_value(custom_web_page);
+            }
+            if (custom_env_vars != null && custom_env_vars.length > 0) {
+                builder.set_member_name("custom_env_vars");
+                builder.begin_array();
+                foreach (var env_var in custom_env_vars) {
+                    builder.add_string_value(env_var);
+                }
+                builder.end_array();
             }
             
             builder.end_object();
@@ -285,6 +305,14 @@ namespace AppManager.Core {
             if (obj.has_member("custom_web_page")) {
                 record.custom_web_page = obj.get_string_member("custom_web_page");
             }
+            if (obj.has_member("custom_env_vars")) {
+                var env_array = obj.get_array_member("custom_env_vars");
+                var env_list = new string[env_array.get_length()];
+                for (uint i = 0; i < env_array.get_length(); i++) {
+                    env_list[i] = env_array.get_string_element(i);
+                }
+                record.custom_env_vars = env_list;
+            }
             
             return record;
         }
@@ -311,6 +339,14 @@ namespace AppManager.Core {
             }
             if (custom_web_page == null && obj.has_member("custom_web_page")) {
                 custom_web_page = obj.get_string_member("custom_web_page");
+            }
+            if (custom_env_vars == null && obj.has_member("custom_env_vars")) {
+                var env_array = obj.get_array_member("custom_env_vars");
+                var env_list = new string[env_array.get_length()];
+                for (uint i = 0; i < env_array.get_length(); i++) {
+                    env_list[i] = env_array.get_string_element(i);
+                }
+                custom_env_vars = env_list;
             }
         }
 

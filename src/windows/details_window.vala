@@ -1,5 +1,6 @@
 using AppManager.Core;
 using AppManager.Utils;
+using Gee;
 
 namespace AppManager {
     public class DetailsWindow : Adw.NavigationPage {
@@ -67,7 +68,9 @@ namespace AppManager {
             var props_group = build_properties_group();
             var update_group = build_update_info_group();
             var advanced_group = build_advanced_group();
+            var env_vars_group = build_env_vars_group();
             props_group.add(advanced_group);
+            props_group.add(env_vars_group);
             
             detail_page.add(props_group);
             detail_page.add(update_group);
@@ -357,6 +360,167 @@ namespace AppManager {
             advanced_group.add_row(build_path_row());
             
             return advanced_group;
+        }
+
+        private const int MAX_ENV_VARS = 5;
+
+        private Adw.ExpanderRow build_env_vars_group() {
+            var env_expander = new Adw.ExpanderRow();
+            env_expander.title = I18n.tr("Environment Variables");
+            env_expander.subtitle = I18n.tr("Set custom environment variables for this app");
+
+            // Load existing env vars
+            var env_vars = record.custom_env_vars ?? new string[0];
+
+            // Track all env var rows for management
+            var env_rows = new Gee.ArrayList<Gtk.Widget>();
+
+            // Helper to rebuild the record's env vars from current rows
+            void save_env_vars_from_rows() {
+                var new_env_vars = new Gee.ArrayList<string>();
+                foreach (var widget in env_rows) {
+                    if (widget is Adw.ActionRow) {
+                        var row = (Adw.ActionRow) widget;
+                        var box = row.get_child() as Gtk.Box;
+                        if (box != null) {
+                            string? name_val = null;
+                            string? value_val = null;
+                            var child = box.get_first_child();
+                            while (child != null) {
+                                if (child is Gtk.Entry) {
+                                    var entry = (Gtk.Entry) child;
+                                    if (name_val == null) {
+                                        name_val = entry.text.strip();
+                                    } else {
+                                        value_val = entry.text.strip();
+                                    }
+                                }
+                                child = child.get_next_sibling();
+                            }
+                            if (name_val != null && name_val != "") {
+                                var env_str = "%s=%s".printf(name_val, value_val ?? "");
+                                new_env_vars.add(env_str);
+                            }
+                        }
+                    }
+                }
+                record.custom_env_vars = new_env_vars.size > 0 ? new_env_vars.to_array() : null;
+                persist_record_and_refresh_desktop();
+            }
+
+            // Create a row for a single env var
+            Adw.ActionRow create_env_var_row(string? initial_name, string? initial_value, Gtk.Button add_button) {
+                var row = new Adw.ActionRow();
+                
+                var content_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+                content_box.set_margin_top(8);
+                content_box.set_margin_bottom(8);
+                content_box.set_margin_start(12);
+                content_box.set_margin_end(12);
+                content_box.set_hexpand(true);
+                
+                var name_entry = new Gtk.Entry();
+                name_entry.set_placeholder_text(I18n.tr("NAME"));
+                name_entry.set_hexpand(true);
+                name_entry.set_max_length(64);
+                name_entry.text = initial_name ?? "";
+                name_entry.changed.connect(() => {
+                    save_env_vars_from_rows();
+                });
+                content_box.append(name_entry);
+                
+                var equals_label = new Gtk.Label("=");
+                equals_label.add_css_class("dim-label");
+                content_box.append(equals_label);
+                
+                var value_entry = new Gtk.Entry();
+                value_entry.set_placeholder_text(I18n.tr("value"));
+                value_entry.set_hexpand(true);
+                value_entry.set_max_length(256);
+                value_entry.text = initial_value ?? "";
+                value_entry.changed.connect(() => {
+                    save_env_vars_from_rows();
+                });
+                content_box.append(value_entry);
+                
+                var delete_button = new Gtk.Button.from_icon_name("user-trash-symbolic");
+                delete_button.add_css_class("flat");
+                delete_button.add_css_class("circular");
+                delete_button.set_valign(Gtk.Align.CENTER);
+                delete_button.tooltip_text = I18n.tr("Remove variable");
+                delete_button.clicked.connect(() => {
+                    env_rows.remove(row);
+                    env_expander.remove(row);
+                    save_env_vars_from_rows();
+                    // Re-enable add button if under limit
+                    if (env_rows.size < MAX_ENV_VARS) {
+                        add_button.sensitive = true;
+                    }
+                });
+                content_box.append(delete_button);
+                
+                row.set_child(content_box);
+                row.set_activatable(false);
+                
+                return row;
+            }
+
+            // Add button row
+            var add_row = new Adw.ActionRow();
+            add_row.set_activatable(false);
+            
+            var add_button = new Gtk.Button();
+            add_button.set_label(I18n.tr("Add Variable"));
+            add_button.add_css_class("flat");
+            add_button.set_halign(Gtk.Align.CENTER);
+            add_button.set_margin_top(8);
+            add_button.set_margin_bottom(8);
+            
+            // Populate existing env vars
+            foreach (var env_var in env_vars) {
+                if (env_var == null || env_var.strip() == "") continue;
+                var eq_pos = env_var.index_of_char('=');
+                string name_part = "";
+                string value_part = "";
+                if (eq_pos >= 0) {
+                    name_part = env_var.substring(0, eq_pos);
+                    value_part = env_var.substring(eq_pos + 1);
+                } else {
+                    name_part = env_var;
+                }
+                var row = create_env_var_row(name_part, value_part, add_button);
+                env_rows.add(row);
+                env_expander.add_row(row);
+            }
+
+            // Update add button sensitivity
+            add_button.sensitive = env_rows.size < MAX_ENV_VARS;
+            
+            add_button.clicked.connect(() => {
+                if (env_rows.size >= MAX_ENV_VARS) {
+                    return;
+                }
+                var row = create_env_var_row(null, null, add_button);
+                env_rows.add(row);
+                // Remove add_row, add new row, re-add add_row to keep button at bottom
+                env_expander.remove(add_row);
+                env_expander.add_row(row);
+                env_expander.add_row(add_row);
+                // Disable add button if at limit
+                if (env_rows.size >= MAX_ENV_VARS) {
+                    add_button.sensitive = false;
+                }
+            });
+            
+            var add_box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 0);
+            add_box.set_halign(Gtk.Align.CENTER);
+            add_box.set_hexpand(true);
+            add_box.append(add_button);
+            add_row.set_child(add_box);
+            
+            env_expander.add_row(add_row);
+            
+            return env_expander;
         }
 
         private Adw.EntryRow build_keywords_row() {

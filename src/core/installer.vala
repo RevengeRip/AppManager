@@ -467,13 +467,42 @@ namespace AppManager.Core {
         private string rewrite_desktop(string desktop_path, string exec_target, InstallationRecord record, bool is_terminal, string slug, bool is_upgrade, string? effective_icon_name, string? effective_keywords, string? effective_startup_wm_class, string? effective_commandline_args, string? effective_update_link, string? effective_web_page) throws Error {
             var entry = new DesktopEntry(desktop_path);
             
-            // Update Exec
+            // Update Exec with optional environment variables
             var args = effective_commandline_args ?? "";
-            if (args.strip() != "") {
-                entry.exec = "\"%s\" %s".printf(exec_target, args);
+            var env_vars = record.custom_env_vars;
+            
+            string exec_line;
+            if (env_vars != null && env_vars.length > 0) {
+                // Use 'env' command to set environment variables
+                var env_builder = new StringBuilder("env ");
+                foreach (var env_var in env_vars) {
+                    if (env_var != null && env_var.strip() != "") {
+                        // Parse NAME=value and quote the value
+                        var eq_pos = env_var.index_of_char('=');
+                        if (eq_pos >= 0) {
+                            var name_part = env_var.substring(0, eq_pos);
+                            var value_part = env_var.substring(eq_pos + 1);
+                            env_builder.append("%s=\"%s\" ".printf(name_part, value_part));
+                        } else {
+                            // No value, just the name
+                            env_builder.append(env_var);
+                            env_builder.append(" ");
+                        }
+                    }
+                }
+                if (args.strip() != "") {
+                    exec_line = "%s\"%s\" %s".printf(env_builder.str, exec_target, args);
+                } else {
+                    exec_line = "%s\"%s\"".printf(env_builder.str, exec_target);
+                }
             } else {
-                entry.exec = "\"%s\"".printf(exec_target);
+                if (args.strip() != "") {
+                    exec_line = "\"%s\" %s".printf(exec_target, args);
+                } else {
+                    exec_line = "\"%s\"".printf(exec_target);
+                }
             }
+            entry.exec = exec_line;
             
             // Update Icon
             entry.icon = (effective_icon_name != null && effective_icon_name.strip() != "") ? effective_icon_name : null;
@@ -748,13 +777,15 @@ namespace AppManager.Core {
             var installed_path = record.installed_path ?? "";
             var stored_exec = record.entry_exec;
 
+            // For extracted AppImages (directory), always use AppRun
+            if (installed_path != "" && File.new_for_path(installed_path).query_file_type(FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+                return Path.build_filename(installed_path, "AppRun");
+            }
+
             if (stored_exec != null && stored_exec.strip() != "") {
                 var token = stored_exec.strip();
                 if (Path.is_absolute(token)) {
                     return token;
-                }
-                if (installed_path != "" && File.new_for_path(installed_path).query_file_type(FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
-                    return Path.build_filename(installed_path, token);
                 }
             }
 
