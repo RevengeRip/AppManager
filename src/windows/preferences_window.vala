@@ -23,7 +23,7 @@ namespace AppManager {
             Object();
             this.settings = settings;
             this.set_title(I18n.tr("Preferences"));
-            this.content_height = 700;
+            this.content_height = 500;
             build_ui();
         }
 
@@ -103,6 +103,16 @@ namespace AppManager {
             var thumbnails_group = new Adw.PreferencesGroup();
             thumbnails_group.title = I18n.tr("Thumbnails");
 
+            var thumbnailer_row = new Adw.ActionRow();
+            thumbnailer_row.title = I18n.tr("AppImage Thumbnailer");
+            thumbnailer_row.subtitle = I18n.tr("Install appimage-thumbnailer to generate thumbnails for AppImages");
+            thumbnailer_row.activatable = true;
+            thumbnailer_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
+            thumbnailer_row.activated.connect(() => {
+                UiUtils.open_url("https://github.com/kem-a/appimage-thumbnailer");
+            });
+            thumbnails_group.add(thumbnailer_row);
+
             var thumbnail_background_row = new Adw.SwitchRow();
             thumbnail_background_row.title = I18n.tr("Hide Nautilus thumbnail background");
             thumbnail_background_row.subtitle = I18n.tr("Remove the alpha checkerboard behind thumbnails and icons");
@@ -114,53 +124,8 @@ namespace AppManager {
 
             thumbnails_group.add(thumbnail_background_row);
 
-            var thumbnailer_row = new Adw.ActionRow();
-            thumbnailer_row.title = I18n.tr("AppImage Thumbnailer");
-            thumbnailer_row.subtitle = I18n.tr("Install appimage-thumbnailer to generate thumbnails for AppImages");
-            thumbnailer_row.activatable = true;
-            thumbnailer_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
-            thumbnailer_row.activated.connect(() => {
-                UiUtils.open_url("https://github.com/kem-a/appimage-thumbnailer");
-            });
-            thumbnails_group.add(thumbnailer_row);
-
-            var links_group = new Adw.PreferencesGroup();
-            links_group.title = I18n.tr("Find more AppImages");
-            links_group.description = I18n.tr("Browse these sources to discover and download AppImages");
-
-            var pkgforge_row = new Adw.ActionRow();
-            pkgforge_row.title = "Anylinux AppImages";
-            pkgforge_row.subtitle = "pkgforge-dev.github.io";
-            pkgforge_row.activatable = true;
-            pkgforge_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
-            pkgforge_row.activated.connect(() => {
-                UiUtils.open_url("https://pkgforge-dev.github.io/Anylinux-AppImages/");
-            });
-            links_group.add(pkgforge_row);
-
-            var appimagehub_row = new Adw.ActionRow();
-            appimagehub_row.title = "AppImageHub";
-            appimagehub_row.subtitle = "appimagehub.com";
-            appimagehub_row.activatable = true;
-            appimagehub_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
-            appimagehub_row.activated.connect(() => {
-                UiUtils.open_url("https://www.appimagehub.com/");
-            });
-            links_group.add(appimagehub_row);
-
-            var appimage_catalog_row = new Adw.ActionRow();
-            appimage_catalog_row.title = "AppImage Catalog";
-            appimage_catalog_row.subtitle = "appimage.github.io";
-            appimage_catalog_row.activatable = true;
-            appimage_catalog_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
-            appimage_catalog_row.activated.connect(() => {
-                UiUtils.open_url("https://appimage.github.io/");
-            });
-            links_group.add(appimage_catalog_row);
-
             page.add(updates_group);
             page.add(thumbnails_group);
-            page.add(links_group);
 
             this.add(page);
 

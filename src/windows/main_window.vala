@@ -17,6 +17,7 @@ namespace AppManager {
         private Gtk.ShortcutsWindow? shortcuts_window;
         private Adw.NavigationView navigation_view;
         private Adw.ToastOverlay toast_overlay;
+        private Adw.BottomSheet bottom_sheet;
         private Gtk.Button? update_button;
         private Gtk.Button? cancel_button;
         private Gtk.Label? update_button_label_widget;
@@ -69,9 +70,16 @@ namespace AppManager {
         private void build_ui() {
             navigation_view = new Adw.NavigationView();
             navigation_view.pop_on_escape = true;
-            
+
+            // Bottom sheet with "Get more ..." button
+            bottom_sheet = new Adw.BottomSheet();
+            bottom_sheet.set_content(navigation_view);
+            bottom_sheet.set_bottom_bar(build_get_more_bottom_bar());
+            bottom_sheet.set_sheet(build_get_more_sheet());
+
+            // Toast overlay wraps bottom sheet so toasts appear above the bottom bar
             toast_overlay = new Adw.ToastOverlay();
-            toast_overlay.set_child(navigation_view);
+            toast_overlay.set_child(bottom_sheet);
             this.set_content(toast_overlay);
 
             general_page = new Adw.PreferencesPage();
@@ -104,6 +112,13 @@ namespace AppManager {
             root_page.title = I18n.tr("AppManager");
             navigation_view.add(root_page);
 
+            // Show/hide bottom bar based on navigation depth
+            navigation_view.popped.connect(() => {
+                if (navigation_view.navigation_stack.get_n_items() == 1) {
+                    bottom_sheet.reveal_bottom_bar = true;
+                }
+            });
+
             this.close_request.connect(() => {
                 settings.set_int("window-width", this.get_width());
                 settings.set_int("window-height", this.get_height());
@@ -114,6 +129,63 @@ namespace AppManager {
         public void add_toast(string message) {
             var toast = new Adw.Toast(message);
             toast_overlay.add_toast(toast);
+        }
+
+        private Gtk.Widget build_get_more_bottom_bar() {
+            var box = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+            box.halign = Gtk.Align.CENTER;
+            box.valign = Gtk.Align.CENTER;
+            box.margin_top = 12;
+            box.margin_bottom = 12;
+            box.append(new Gtk.Image.from_icon_name("folder-download-symbolic"));
+            box.append(new Gtk.Label(I18n.tr("Get more ...")));
+            return box;
+        }
+
+        private Gtk.Widget build_get_more_sheet() {
+            var sheet_toolbar = new Adw.ToolbarView();
+            var header = new Adw.HeaderBar();
+            header.show_title = false;
+            sheet_toolbar.add_top_bar(header);
+
+            var page = new Adw.PreferencesPage();
+            var links_group = new Adw.PreferencesGroup();
+            links_group.title = I18n.tr("Find more AppImages");
+            links_group.description = I18n.tr("Browse these sources to discover and download AppImages");
+
+            var pkgforge_row = new Adw.ActionRow();
+            pkgforge_row.title = "Anylinux AppImages";
+            pkgforge_row.subtitle = "pkgforge-dev.github.io";
+            pkgforge_row.activatable = true;
+            pkgforge_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
+            pkgforge_row.activated.connect(() => {
+                UiUtils.open_url("https://pkgforge-dev.github.io/Anylinux-AppImages/");
+            });
+            links_group.add(pkgforge_row);
+
+            var appimagehub_row = new Adw.ActionRow();
+            appimagehub_row.title = "AppImageHub";
+            appimagehub_row.subtitle = "appimagehub.com";
+            appimagehub_row.activatable = true;
+            appimagehub_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
+            appimagehub_row.activated.connect(() => {
+                UiUtils.open_url("https://www.appimagehub.com/");
+            });
+            links_group.add(appimagehub_row);
+
+            var appimage_catalog_row = new Adw.ActionRow();
+            appimage_catalog_row.title = "AppImage Catalog";
+            appimage_catalog_row.subtitle = "appimage.github.io";
+            appimage_catalog_row.activatable = true;
+            appimage_catalog_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
+            appimage_catalog_row.activated.connect(() => {
+                UiUtils.open_url("https://appimage.github.io/");
+            });
+            links_group.add(appimage_catalog_row);
+
+            page.add(links_group);
+            sheet_toolbar.set_content(page);
+            return sheet_toolbar;
         }
 
         private void ensure_apps_group_present() {
@@ -1111,6 +1183,8 @@ namespace AppManager {
                 }
             });
             active_details_window = details_window;
+            bottom_sheet.open = false;
+            bottom_sheet.reveal_bottom_bar = false;
             navigation_view.push(details_window);
         }
     }
