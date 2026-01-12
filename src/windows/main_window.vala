@@ -18,6 +18,7 @@ namespace AppManager {
         private Adw.NavigationView navigation_view;
         private Adw.ToastOverlay toast_overlay;
         private Adw.BottomSheet bottom_sheet;
+        private Gtk.Widget bottom_bar_widget;
         private Gtk.Button? update_button;
         private Gtk.Button? cancel_button;
         private Gtk.Label? update_button_label_widget;
@@ -74,7 +75,8 @@ namespace AppManager {
             // Bottom sheet with "Get more ..." button
             bottom_sheet = new Adw.BottomSheet();
             bottom_sheet.set_content(navigation_view);
-            bottom_sheet.set_bottom_bar(build_get_more_bottom_bar());
+            bottom_bar_widget = build_get_more_bottom_bar();
+            bottom_sheet.set_bottom_bar(bottom_bar_widget);
             bottom_sheet.set_sheet(build_get_more_sheet());
 
             // Toast overlay wraps bottom sheet so toasts appear above the bottom bar
@@ -115,7 +117,7 @@ namespace AppManager {
             // Show/hide bottom bar based on navigation depth
             navigation_view.popped.connect(() => {
                 if (navigation_view.navigation_stack.get_n_items() == 1) {
-                    bottom_sheet.reveal_bottom_bar = true;
+                    bottom_bar_widget.visible = true;
                 }
             });
 
@@ -1184,7 +1186,7 @@ namespace AppManager {
             });
             active_details_window = details_window;
             bottom_sheet.open = false;
-            bottom_sheet.reveal_bottom_bar = false;
+            bottom_bar_widget.visible = false;
             navigation_view.push(details_window);
         }
     }
