@@ -413,10 +413,6 @@ namespace AppManager {
             string replace_text;
             if (installed_newer) {
                 replace_text = I18n.tr("A newer item named %s already exists in this location. Do you want to replace it with the older one you're copying?").printf(record.name);
-                var warning_icon = new Gtk.Image.from_icon_name("dialog-warning-symbolic");
-                warning_icon.set_pixel_size(32);
-                warning_icon.halign = Gtk.Align.CENTER;
-                dialog.append_body(warning_icon);
                 if (record.version != null && resolved_app_version != null) {
                     var versions = I18n.tr("Installed: %s | Incoming: %s").printf(record.version, resolved_app_version);
                     dialog.append_body(UiUtils.create_wrapped_label(GLib.Markup.escape_text(versions, -1), true, true));
@@ -425,9 +421,9 @@ namespace AppManager {
                 replace_text = I18n.tr("An item named %s already exists in this location. Do you want to replace it with one you're copying?").printf(record.name);
             }
             dialog.append_body(UiUtils.create_wrapped_label(GLib.Markup.escape_text(replace_text, -1), true));
-            var stop_is_default = installed_newer;
-            dialog.add_option("stop", I18n.tr("Stop"), !stop_is_default);
-            dialog.add_option("replace", I18n.tr("Replace"), stop_is_default);
+            var replace_is_default = !installed_newer;
+            dialog.add_option("stop", I18n.tr("Stop"), !replace_is_default);
+            dialog.add_option("replace", I18n.tr("Replace"), replace_is_default);
 
             install_prompt_visible = true;
             dialog.close_request.connect(() => {
