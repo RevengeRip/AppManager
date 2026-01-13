@@ -28,7 +28,7 @@ AppManager is a GTK/Libadwaita developed desktop utility in Vala that makes inst
 ## Requirements
 
 - `valac`, `meson`, `ninja`
-- Libraries: `libadwaita-1` (>= 1.5), `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`
+- Libraries: `libadwaita-1` (>= 1.6), `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`
 - Runtime tools: `7z`/`p7zip-full`, `dwarfs`, `dwarfsextract`
 
 ## Install
