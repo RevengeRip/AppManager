@@ -238,28 +238,18 @@ X-XDP-Autostart=com.github.AppManager
 
             try {
                 var connection = Bus.get_sync(BusType.SESSION);
-                var hints = new HashTable<string, Variant>(str_hash, str_equal);
-                hints.insert("urgency", new Variant.byte(1)); // Normal urgency
-                
-                // Get the executable path for the default action
-                var exec_path = AppPaths.current_executable_path ?? "app-manager";
-                hints.insert("desktop-entry", new Variant.string(Core.APPLICATION_ID));
 
                 connection.call_sync(
                     "org.freedesktop.Notifications",
                     "/org/freedesktop/Notifications",
                     "org.freedesktop.Notifications",
                     "Notify",
-                    new Variant("(susssasa{sv}i)",
-                        Core.APPLICATION_ID,  // app_name
-                        (uint32) 0,           // replaces_id
-                        "com.github.AppManager",  // app_icon
-                        title,
-                        body,
-                        new Variant.array(VariantType.STRING, {}),  // actions
-                        hints,
-                        -1                    // expire_timeout (-1 = default)
-                    ),
+                    new Variant.parsed("('%s', uint32 0, '%s', '%s', '%s', @as [], @a{sv} {}, -1)".printf(
+                        "AppManager",
+                        "com.github.AppManager",
+                        title.replace("'", "\\'"),
+                        body.replace("'", "\\'")
+                    )),
                     VariantType.TUPLE,
                     DBusCallFlags.NONE,
                     -1,
