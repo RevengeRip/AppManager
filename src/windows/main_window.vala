@@ -38,6 +38,7 @@ namespace AppManager {
         private GLib.SimpleActionGroup? window_actions;
         private Gtk.MenuButton? main_menu_button;
         private Gtk.Button? refresh_button;
+        private Adw.Banner? fuse_banner;
         private string current_search_query = "";
         private bool has_installations = true;
 
@@ -554,10 +555,41 @@ namespace AppManager {
                 search_bar.connect_entry(search_entry);
                 
                 toolbar.add_top_bar(search_bar);
+
+                // FUSE not installed warning banner
+                fuse_banner = new Adw.Banner(I18n.tr("FUSE not installed. Some AppImages may fail to run"));
+                fuse_banner.add_css_class("warning");
+                fuse_banner.button_label = I18n.tr("Learn More");
+                fuse_banner.button_clicked.connect(() => {
+                    Gtk.show_uri(this, "https://github.com/AppImage/AppImageKit/wiki/FUSE", Gdk.CURRENT_TIME);
+                });
+                fuse_banner.revealed = !is_fuse_installed();
+                toolbar.add_top_bar(fuse_banner);
             }
 
             toolbar.set_content(content);
             return toolbar;
+        }
+
+        private bool is_fuse_installed() {
+            // AppImages typically require libfuse.so.2 (FUSE 2.x)
+            // Check common library paths for the actual library file
+            string[] lib_paths = {
+                "/usr/lib/libfuse.so.2",
+                "/usr/lib64/libfuse.so.2",
+                "/lib/libfuse.so.2",
+                "/lib64/libfuse.so.2",
+                "/usr/lib/x86_64-linux-gnu/libfuse.so.2",
+                "/usr/lib/aarch64-linux-gnu/libfuse.so.2",
+                "/usr/lib/i386-linux-gnu/libfuse.so.2"
+            };
+
+            foreach (var path in lib_paths) {
+                if (GLib.FileUtils.test(path, FileTest.EXISTS)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         private void on_search_changed() {
