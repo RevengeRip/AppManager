@@ -42,6 +42,12 @@ namespace AppManager.Core {
             }
         }
 
+        public static string staged_updates_file {
+            owned get {
+                return Path.build_filename(data_dir, STAGED_UPDATES_FILENAME);
+            }
+        }
+
         public static string applications_dir {
             owned get {
                 var dir = Path.build_filename(Environment.get_home_dir(), APPLICATIONS_DIRNAME);

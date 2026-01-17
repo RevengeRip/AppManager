@@ -6,12 +6,17 @@ namespace AppManager.Core {
         private GLib.Settings settings;
         private InstallationRegistry registry;
         private Updater updater;
+        private StagedUpdatesManager staged_updates;
         private string update_log_path;
+        private uint32 notification_id = 0;
+        private DBusConnection? dbus_connection = null;
+        private uint action_signal_id = 0;
 
         public BackgroundUpdateService(GLib.Settings settings, InstallationRegistry registry, Installer installer) {
             this.settings = settings;
             this.registry = registry;
             this.updater = new Updater(registry, installer);
+            this.staged_updates = new StagedUpdatesManager();
             this.update_log_path = Path.build_filename(AppPaths.data_dir, "updates.log");
         }
 
@@ -161,7 +166,7 @@ X-XDP-Autostart=com.github.AppManager
 
         /**
          * Probes for available updates and sends a notification if any are found.
-         * Does not download or install updates.
+         * Does not download or install updates. Saves staged updates to disk.
          */
         private void perform_update_probe(Cancellable? cancellable) {
             log_debug("background update: probing for updates (notify-only mode)");
@@ -170,17 +175,27 @@ X-XDP-Autostart=com.github.AppManager
             int updates_available = 0;
             var app_names = new Gee.ArrayList<string>();
 
+            // Clear previous staged updates and add newly discovered ones
+            staged_updates.clear();
+
             foreach (var result in probe_results) {
                 if (result.has_update) {
                     updates_available++;
                     var app_name = result.record.name ?? result.record.id;
                     app_names.add(app_name);
+                    
+                    // Stage the update so UI can display it
+                    staged_updates.add(result.record.id, app_name, result.available_version);
+                    
                     log_debug("background update: update available for %s (version: %s)".printf(
                         app_name, result.available_version ?? "unknown"));
                     append_update_log("UPDATE_AVAILABLE %s: %s".printf(
                         app_name, result.available_version ?? "unknown"));
                 }
             }
+
+            // Save staged updates to disk
+            staged_updates.save();
 
             if (updates_available > 0) {
                 send_updates_notification(updates_available, app_names);
@@ -226,38 +241,117 @@ X-XDP-Autostart=com.github.AppManager
          * Sends a desktop notification about available updates via D-Bus.
          * Uses org.freedesktop.Notifications directly since background daemon
          * may not have a full GLib.Application context.
+         * The notification includes a default action to open AppManager.
          */
         private void send_updates_notification(int count, Gee.ArrayList<string> app_names) {
             string title = I18n.tr("App updates available");
-            string body;
-            if (count == 1) {
-                body = I18n.tr("Update available for %s").printf(app_names.get(0));
-            } else {
-                body = I18n.tr("%d app updates available").printf(count);
-            }
+            // Always show aggregate count
+            string body = I18n.tr("%d app update(s) available").printf(count);
 
             try {
-                var connection = Bus.get_sync(BusType.SESSION);
+                if (dbus_connection == null) {
+                    dbus_connection = Bus.get_sync(BusType.SESSION);
+                }
 
-                connection.call_sync(
+                // Build actions array: pairs of (action_key, label)
+                // "default" action is invoked when user clicks the notification body
+                string[] actions = { "default", I18n.tr("Open AppManager") };
+
+                // Hints dict - empty for now
+                var hints_builder = new VariantBuilder(new VariantType("a{sv}"));
+
+                var result = dbus_connection.call_sync(
                     "org.freedesktop.Notifications",
                     "/org/freedesktop/Notifications",
                     "org.freedesktop.Notifications",
                     "Notify",
-                    new Variant.parsed("('%s', uint32 0, '%s', '%s', '%s', @as [], @a{sv} {}, -1)".printf(
-                        "AppManager",
-                        "com.github.AppManager",
-                        title.replace("'", "\\'"),
-                        body.replace("'", "\\'")
-                    )),
+                    new Variant("(susss@as@a{sv}i)",
+                        "AppManager",                    // app_name
+                        (uint32) 0,                      // replaces_id
+                        "com.github.AppManager",         // app_icon
+                        title,                           // summary
+                        body,                            // body
+                        new Variant.strv(actions),       // actions
+                        hints_builder.end(),             // hints
+                        -1                               // expire_timeout (-1 = default)
+                    ),
                     VariantType.TUPLE,
                     DBusCallFlags.NONE,
                     -1,
                     null
                 );
-                log_debug("background update: sent notification for %d update(s)".printf(count));
+
+                // Store notification ID for action handling
+                result.get("(u)", out notification_id);
+                log_debug("background update: sent notification %u for %d update(s)".printf(notification_id, count));
+                
+                // Set up action handler after successful notification
+                setup_notification_action_handler();
             } catch (Error e) {
+                log_debug("background update: failed to send notification: %s".printf(e.message));
                 warning("Failed to send notification via D-Bus: %s", e.message);
+            }
+        }
+
+        /**
+         * Sets up a D-Bus signal handler for notification actions.
+         * When user clicks the notification, it opens AppManager.
+         */
+        private void setup_notification_action_handler() {
+            if (dbus_connection == null || action_signal_id != 0) {
+                return;
+            }
+
+            action_signal_id = dbus_connection.signal_subscribe(
+                "org.freedesktop.Notifications",
+                "org.freedesktop.Notifications",
+                "ActionInvoked",
+                "/org/freedesktop/Notifications",
+                null,
+                DBusSignalFlags.NONE,
+                (conn, sender, object_path, interface_name, signal_name, parameters) => {
+                    on_notification_action(conn, sender, object_path, interface_name, signal_name, parameters);
+                }
+            );
+        }
+
+        /**
+         * Handles notification action invocations.
+         * Opens AppManager when user clicks the notification.
+         */
+        private void on_notification_action(DBusConnection conn, string? sender, string object_path,
+                                           string interface_name, string signal_name, Variant parameters) {
+            uint32 id;
+            string action_key;
+            parameters.get("(us)", out id, out action_key);
+
+            if (id == notification_id && action_key == "default") {
+                launch_app_manager();
+            }
+        }
+
+        /**
+         * Launches the AppManager GUI application.
+         */
+        private void launch_app_manager() {
+            try {
+                var exec_path = AppPaths.current_executable_path ?? "app-manager";
+                string[] argv = { exec_path };
+                Pid child_pid;
+                Process.spawn_async(
+                    null,
+                    argv,
+                    null,
+                    GLib.SpawnFlags.SEARCH_PATH | GLib.SpawnFlags.DO_NOT_REAP_CHILD,
+                    null,
+                    out child_pid
+                );
+
+                ChildWatch.add(child_pid, (pid, status) => {
+                    Process.close_pid(pid);
+                });
+            } catch (SpawnError e) {
+                warning("Failed to launch AppManager: %s", e.message);
             }
         }
 

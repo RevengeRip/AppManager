@@ -41,6 +41,7 @@ namespace AppManager {
         private Adw.Banner? fuse_banner;
         private string current_search_query = "";
         private bool has_installations = true;
+        private StagedUpdatesManager staged_updates;
 
         public MainWindow(Application app, InstallationRegistry registry, Installer installer, Settings settings) {
             Object(application: app);
@@ -51,6 +52,7 @@ namespace AppManager {
             this.installer = installer;
             this.settings = settings;
             this.updater = new Updater(registry, installer);
+            this.staged_updates = new StagedUpdatesManager();
             this.pending_update_keys = new Gee.HashSet<string>();
             this.record_size_cache = new Gee.HashMap<string, string>();
             this.updating_records = new Gee.HashSet<string>();
@@ -60,8 +62,36 @@ namespace AppManager {
             this.set_default_size(settings.get_int("window-width"), settings.get_int("window-height"));
             build_ui();
             setup_window_actions();
+            load_staged_updates();
             refresh_installations();
             registry.changed.connect(on_registry_changed);
+        }
+
+        /**
+         * Loads staged updates from disk and populates pending_update_keys.
+         * Called on startup to show updates discovered by background service.
+         */
+        private void load_staged_updates() {
+            if (!staged_updates.has_updates()) {
+                return;
+            }
+
+            var records = registry.list();
+            var staged_ids = staged_updates.get_record_ids();
+            int loaded = 0;
+
+            foreach (var record in records) {
+                if (staged_ids.contains(record.id)) {
+                    pending_update_keys.add(record_state_key(record));
+                    loaded++;
+                }
+            }
+
+            if (loaded > 0) {
+                debug("MainWindow: loaded %d staged update(s)", loaded);
+                // Switch to "ready to update" state if we have pending updates
+                set_update_button_state(UpdateWorkflowState.READY_TO_UPDATE);
+            }
         }
 
         private void on_registry_changed() {
@@ -557,12 +587,13 @@ namespace AppManager {
                 
                 toolbar.add_top_bar(search_bar);
 
-                // FUSE not installed warning banner
-                fuse_banner = new Adw.Banner(I18n.tr("FUSE not installed. Some AppImages may fail to run"));
+                // FUSE is not installed warning banner
+                fuse_banner = new Adw.Banner(I18n.tr("FUSE is not installed. Some AppImages may fail to run"));
                 fuse_banner.add_css_class("warning");
                 fuse_banner.button_label = I18n.tr("Learn More");
                 fuse_banner.button_clicked.connect(() => {
-                    Gtk.show_uri(this, "https://github.com/AppImage/AppImageKit/wiki/FUSE", Gdk.CURRENT_TIME);
+                    var launcher = new Gtk.UriLauncher("https://github.com/AppImage/AppImageKit/wiki/FUSE");
+                    launcher.launch.begin(this, null);
                 });
                 fuse_banner.revealed = !is_fuse_installed();
                 toolbar.add_top_bar(fuse_banner);
@@ -792,6 +823,10 @@ namespace AppManager {
 
         private void handle_probe_results(Gee.ArrayList<UpdateProbeResult> probes) {
             pending_update_keys.clear();
+            // Clear staged updates since we're doing a fresh check
+            staged_updates.clear();
+            staged_updates.save();
+            
             int available = 0;
             foreach (var result in probes) {
                 if (result.has_update) {
@@ -890,6 +925,9 @@ namespace AppManager {
             if (result.status == UpdateStatus.UPDATED) {
                 pending_update_keys.remove(key);
                 record_size_cache.unset(result.record.id);
+                // Remove from staged updates and save
+                staged_updates.remove(result.record.id);
+                staged_updates.save();
             }
             refresh_installations();
             sync_details_window_state(result.record);
@@ -908,9 +946,14 @@ namespace AppManager {
                     remaining.add(key);
                 } else {
                     record_size_cache.unset(result.record.id);
+                    // Remove from staged updates as well
+                    staged_updates.remove(result.record.id);
                 }
                 sync_details_window_state(result.record);
             }
+            // Save staged updates after removing completed ones
+            staged_updates.save();
+            
             pending_update_keys.clear();
             foreach (var key in remaining) {
                 pending_update_keys.add(key);

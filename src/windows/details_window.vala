@@ -470,7 +470,7 @@ namespace AppManager {
             add_row.set_activatable(false);
             
             var add_button = new Gtk.Button();
-            add_button.set_label(I18n.tr("Add Variable"));
+            add_button.set_label("+");
             add_button.add_css_class("flat");
             add_button.set_halign(Gtk.Align.CENTER);
             add_button.set_margin_top(8);

@@ -39,7 +39,8 @@ jobs:
             curl \
             file \
             fuse \
-            fuse-libs
+            fuse-libs \
+            zsync
 
       - name: Install appimagetool
         run: |
@@ -109,12 +110,17 @@ jobs:
           # Build AppImage
           ARCH=x86_64 appimagetool "$APPDIR" "$PACKAGE_DIR/AppManager-${VERSION}-x86_64.AppImage"
 
+          # Generate zsync file for delta updates
+          cd "$PACKAGE_DIR"
+          zsyncmake -u "AppManager-${VERSION}-x86_64.AppImage" "AppManager-${VERSION}-x86_64.AppImage"
+
       - name: Upload release packages
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             packages/AppManager-${{ steps.meta.outputs.version }}-x86_64.AppImage
+            packages/AppManager-${{ steps.meta.outputs.version }}-x86_64.AppImage.zsync
 
       - name: Upload artifacts (for non-release builds)
         if: "!startsWith(github.ref, 'refs/tags/')"
@@ -155,7 +161,8 @@ jobs:
             curl \
             file \
             fuse \
-            fuse-libs
+            fuse-libs \
+            zsync
 
       - name: Install appimagetool
         run: |
@@ -225,12 +232,17 @@ jobs:
           # Build AppImage
           ARCH=aarch64 appimagetool "$APPDIR" "$PACKAGE_DIR/AppManager-${VERSION}-aarch64.AppImage"
 
+          # Generate zsync file for delta updates
+          cd "$PACKAGE_DIR"
+          zsyncmake -u "AppManager-${VERSION}-aarch64.AppImage" "AppManager-${VERSION}-aarch64.AppImage"
+
       - name: Upload release packages
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
             packages/AppManager-${{ steps.meta.outputs.version }}-aarch64.AppImage
+            packages/AppManager-${{ steps.meta.outputs.version }}-aarch64.AppImage.zsync
 
       - name: Upload artifacts (for non-release builds)
         if: "!startsWith(github.ref, 'refs/tags/')"
