@@ -337,6 +337,22 @@ namespace AppManager.Core {
                 var original_homepage = desktop_entry.appimage_homepage;
                 var original_update_url = desktop_entry.appimage_update_url;
                 
+                // Check for zsync update info from .upd_info ELF section
+                // If present and is zsync format, store it for delta updates
+                string? zsync_info = null;
+                if (metadata.update_info != null && metadata.update_info.strip() != "") {
+                    var update_info = metadata.update_info.strip();
+                    // Check if it's a zsync format (gh-releases-zsync|... or zsync|...)
+                    if (update_info.has_prefix("gh-releases-zsync|") || update_info.has_prefix("zsync|")) {
+                        zsync_info = update_info;
+                        // Use normalized URL as the display update link
+                        original_update_url = Updater.normalize_update_url(update_info);
+                    } else {
+                        // Not zsync, use as regular update URL
+                        original_update_url = update_info;
+                    }
+                }
+                
                 var exec_value = desktop_entry.exec;
                 var original_exec_args = exec_value != null ? DesktopEntry.extract_exec_arguments(exec_value) : null;
                 resolved_entry_exec = exec_value != null ? DesktopEntry.resolve_exec_from_desktop(exec_value, effective_app_run) : null;
@@ -363,6 +379,7 @@ namespace AppManager.Core {
                 record.original_commandline_args = original_exec_args;
                 record.original_update_link = original_update_url;
                 record.original_web_page = original_homepage;
+                record.zsync_update_info = zsync_info;  // Store zsync info if present
                 
                 // For fresh install with history (reinstall), use effective values (considers CLEARED_VALUE)
                 var effective_icon = record.get_effective_icon_name() ?? icon_name_for_desktop;

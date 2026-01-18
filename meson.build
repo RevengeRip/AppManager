@@ -1,5 +1,5 @@
 project('app-manager', ['vala', 'c'],
-  version: '2.2.4-beta',
+  version: '2.3.0-beta',
   meson_version: '>=0.64.0'
 )
 
@@ -43,6 +43,17 @@ dwarfs_arch_map = {
 dwarfs_arch = dwarfs_arch_map.get(host_cpu, '')
 bundle_dwarfs = get_option('bundle_dwarfs')
 
+# Zsync tools bundling (uses same architecture mapping)
+zsync_tools_dir = get_option('prefix') / get_option('bindir')
+bundle_zsync = get_option('bundle_zsync')
+
+# Map Meson's cpu_family to zsync2's naming convention
+zsync_arch_map = {
+  'x86_64': 'x86_64',
+  'aarch64': 'aarch64',
+}
+zsync_arch = zsync_arch_map.get(host_cpu, '')
+
 core_sources = files(
   'src/core/app_constants.vala',
   'src/core/app_paths.vala',
@@ -65,6 +76,7 @@ core_sources = files(
 build_info_conf = configuration_data()
 build_info_conf.set('VERSION', meson.project_version())
 build_info_conf.set('DWARFS_BUNDLE_DIR', dwarfs_tools_dir)
+build_info_conf.set('ZSYNC_BUNDLE_DIR', zsync_tools_dir)
 build_info = configure_file(
   input: 'src/core/build_info.vala.in',
   output: 'build_info.vala',
@@ -85,6 +97,20 @@ if bundle_dwarfs and dwarfs_arch != ''
   )
 elif bundle_dwarfs and dwarfs_arch == ''
   warning('DwarFS tools bundling requested but architecture "@0@" is not supported'.format(host_cpu))
+endif
+
+# Fetch and install zsync2 if requested and supported
+if bundle_zsync and zsync_arch != ''
+  fetch_zsync_script = files('scripts/fetch-zsync-tools.sh')
+  zsync_tools = custom_target('zsync-tools',
+    output: ['zsync2'],
+    build_by_default: bundle_zsync,
+    command: ['sh', fetch_zsync_script, zsync_arch, meson.current_build_dir()],
+    install: true,
+    install_dir: zsync_tools_dir
+  )
+elif bundle_zsync and zsync_arch == ''
+  warning('Zsync tools bundling requested but architecture "@0@" is not supported'.format(host_cpu))
 endif
 
 subdir('data')

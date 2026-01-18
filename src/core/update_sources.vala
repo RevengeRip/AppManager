@@ -130,6 +130,54 @@ namespace AppManager.Core {
         }
     }
 
+    /**
+     * Zsync update source for direct zsync URLs.
+     * Format: zsync|https://example.com/App.AppImage.zsync
+     */
+    public class ZsyncDirectSource : UpdateSource {
+        public string zsync_url { get; private set; }
+
+        public ZsyncDirectSource(string zsync_url) {
+            Object();
+            this.zsync_url = zsync_url;
+        }
+
+        /**
+         * Parse a direct zsync URL from .upd_info format.
+         * Format: zsync|URL
+         */
+        public static ZsyncDirectSource? parse(string update_info) {
+            if (!update_info.has_prefix("zsync|")) {
+                return null;
+            }
+            
+            var parts = update_info.split("|");
+            if (parts.length < 2) {
+                return null;
+            }
+            
+            var url = parts[1].strip();
+            if (url == "") {
+                return null;
+            }
+            
+            // Validate it's a proper URL
+            try {
+                var uri = GLib.Uri.parse(url, GLib.UriFlags.NONE);
+                var scheme = uri.get_scheme();
+                if (scheme == null) return null;
+                
+                var normalized = scheme.down();
+                if (normalized != "http" && normalized != "https") {
+                    return null;
+                }
+                return new ZsyncDirectSource(url);
+            } catch (Error e) {
+                return null;
+            }
+        }
+    }
+
     private static string[] tokenize_path(string path) {
         var parts = new ArrayList<string>();
         foreach (var segment in path.split("/")) {

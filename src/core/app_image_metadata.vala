@@ -6,6 +6,7 @@ namespace AppManager.Core {
         public string display_name { get; private set; }
         public bool is_executable { get; private set; }
         public string checksum { get; private set; }
+        public string? update_info { get; private set; }
 
         public AppImageMetadata(File file) throws Error {
             this.file = file;
@@ -15,6 +16,58 @@ namespace AppManager.Core {
             display_name = derive_name(file.get_basename());
             checksum = Utils.FileUtils.compute_checksum(file.get_path());
             is_executable = detect_executable();
+            update_info = extract_update_info(file.get_path());
+        }
+
+        /**
+         * Extract update information from AppImage's .upd_info ELF section.
+         * This section contains update URLs in formats like:
+         *   - zsync|https://example.com/App.AppImage.zsync
+         *   - gh-releases-zsync|owner|repo|latest|App-*x86_64.AppImage.zsync
+         * Returns null if no update info is found.
+         */
+        private static string? extract_update_info(string appimage_path) {
+            try {
+                string stdout_buf;
+                string stderr_buf;
+                int exit_status;
+                
+                Process.spawn_command_line_sync(
+                    "readelf -p .upd_info \"%s\"".printf(appimage_path),
+                    out stdout_buf,
+                    out stderr_buf,
+                    out exit_status
+                );
+                
+                if (exit_status != 0 || stdout_buf == null || stdout_buf.strip() == "") {
+                    return null;
+                }
+                
+                // Parse readelf output - look for the actual content line
+                // Format: "  [     0]  zsync|https://..."
+                foreach (var line in stdout_buf.split("\n")) {
+                    var trimmed = line.strip();
+                    // Skip header lines and empty lines
+                    if (trimmed == "" || trimmed.has_prefix("String dump") || trimmed.has_prefix("Section")) {
+                        continue;
+                    }
+                    // Content lines start with [ followed by offset
+                    if (trimmed.has_prefix("[")) {
+                        var bracket_end = trimmed.index_of("]");
+                        if (bracket_end > 0 && bracket_end + 1 < trimmed.length) {
+                            var content = trimmed.substring(bracket_end + 1).strip();
+                            if (content != "" && !content.has_prefix("Section")) {
+                                return content;
+                            }
+                        }
+                    }
+                }
+                
+                return null;
+            } catch (Error e) {
+                debug("Failed to extract .upd_info: %s", e.message);
+                return null;
+            }
         }
 
         private bool detect_executable() {

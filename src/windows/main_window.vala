@@ -892,7 +892,10 @@ namespace AppManager {
             var key = record_state_key(record);
             updating_records.add(key);
             if (active_details_window != null && active_details_window.matches_record(record)) {
+                // Order matters: set_update_loading first, then set_update_updating
+                // because refresh_update_button() resets update_updating when update_loading is false
                 active_details_window.set_update_loading(true);
+                active_details_window.set_update_updating(true);
             }
             refresh_installations();
             trigger_single_update_async.begin(record);
@@ -929,6 +932,10 @@ namespace AppManager {
                 // Remove from staged updates and save
                 staged_updates.remove(result.record.id);
                 staged_updates.save();
+                // Refresh details window with updated record data
+                if (active_details_window != null && active_details_window.matches_record(result.record)) {
+                    active_details_window.refresh_with_record(result.record);
+                }
             }
             refresh_installations();
             sync_details_window_state(result.record);

@@ -195,6 +195,8 @@ namespace AppManager.Core {
          *   https://github.com/user/repo → https://github.com/user/repo
          *   https://gitlab.com/group/project/-/releases/v1.0/downloads/App.AppImage → https://gitlab.com/group/project
          *   https://gitlab.com/group/project/-/jobs/123/artifacts/raw/App.AppImage → https://gitlab.com/group/project
+         *   gh-releases-zsync|owner|repo|latest|*.zsync → https://github.com/owner/repo
+         *   zsync|https://example.com/app.zsync → https://example.com/app.zsync (with .zsync stripped)
          */
         public static string? normalize_update_url(string? url) {
             if (url == null || url.strip() == "") {
@@ -202,6 +204,32 @@ namespace AppManager.Core {
             }
 
             var trimmed = url.strip();
+            
+            // Handle gh-releases-zsync format: gh-releases-zsync|owner|repo|tag|pattern
+            // Convert to GitHub repository URL
+            if (trimmed.has_prefix("gh-releases-zsync|")) {
+                var parts = trimmed.split("|");
+                if (parts.length >= 3) {
+                    var owner = parts[1].strip();
+                    var repo = parts[2].strip();
+                    if (owner != "" && repo != "") {
+                        return "https://github.com/%s/%s".printf(owner, repo);
+                    }
+                }
+                return trimmed;
+            }
+            
+            // Handle zsync direct URL format: zsync|URL
+            // Strip the zsync| prefix and normalize the URL
+            if (trimmed.has_prefix("zsync|")) {
+                var zsync_url = trimmed.substring(6).strip();
+                // Remove .zsync extension for display
+                if (zsync_url.has_suffix(".zsync")) {
+                    zsync_url = zsync_url.substring(0, zsync_url.length - 6);
+                }
+                // Recursively normalize the extracted URL
+                return normalize_update_url(zsync_url);
+            }
             
             try {
                 var uri = GLib.Uri.parse(trimmed, GLib.UriFlags.NONE);
@@ -247,11 +275,43 @@ namespace AppManager.Core {
             return trimmed;
         }
 
+        /**
+         * Resolve zsync update info to a ZsyncDirectSource.
+         * Handles both direct zsync URLs and gh-releases-zsync format.
+         */
+        private ZsyncDirectSource? resolve_zsync_source(string zsync_info) {
+            // Direct zsync URL: zsync|https://example.com/app.zsync
+            var zsync_direct = ZsyncDirectSource.parse(zsync_info);
+            if (zsync_direct != null) {
+                return zsync_direct;
+            }
+
+            // GitHub releases zsync: gh-releases-zsync|owner|repo|tag|pattern
+            var resolved_url = resolve_gh_releases_zsync(zsync_info);
+            if (resolved_url != null) {
+                return new ZsyncDirectSource(resolved_url);
+            }
+
+            return null;
+        }
+
         // ─────────────────────────────────────────────────────────────────────
         // Update Source Resolution
         // ─────────────────────────────────────────────────────────────────────
 
         private UpdateSource? resolve_update_source(string update_url, string? record_version) {
+            // First check for zsync-specific formats from .upd_info
+            var zsync_direct = ZsyncDirectSource.parse(update_url);
+            if (zsync_direct != null) {
+                return zsync_direct;
+            }
+
+            // Handle gh-releases-zsync by resolving to actual zsync URL
+            var resolved_zsync_url = resolve_gh_releases_zsync(update_url);
+            if (resolved_zsync_url != null) {
+                return new ZsyncDirectSource(resolved_zsync_url);
+            }
+
             var normalized = normalize_update_url(update_url);
             if (normalized == null) {
                 return null;
@@ -269,6 +329,126 @@ namespace AppManager.Core {
 
             // Fall back to direct URL for non-GitHub/GitLab URLs
             return DirectUrlSource.parse(update_url);
+        }
+
+        /**
+         * Resolve gh-releases-zsync format to actual zsync download URL.
+         * Format: gh-releases-zsync|owner|repo|tag|filename-pattern
+         * Returns the resolved URL or null if not a gh-releases-zsync format or resolution fails.
+         */
+        private string? resolve_gh_releases_zsync(string update_info) {
+            if (!update_info.has_prefix("gh-releases-zsync|")) {
+                return null;
+            }
+            
+            var parts = update_info.split("|");
+            if (parts.length < 5) {
+                return null;
+            }
+            
+            var owner = parts[1].strip();
+            var repo = parts[2].strip();
+            var tag = parts[3].strip();
+            var pattern = parts[4].strip();
+            
+            if (owner == "" || repo == "" || tag == "" || pattern == "") {
+                return null;
+            }
+            
+            try {
+                // Use appropriate API endpoint based on tag
+                string api_url;
+                if (tag == "latest") {
+                    api_url = "https://api.github.com/repos/%s/%s/releases/latest".printf(owner, repo);
+                } else {
+                    api_url = "https://api.github.com/repos/%s/%s/releases?per_page=10".printf(owner, repo);
+                }
+                
+                var root = fetch_json(api_url, "application/vnd.github+json", null);
+                if (root == null) return null;
+                
+                // Find matching asset
+                if (tag == "latest" && root.get_node_type() == Json.NodeType.OBJECT) {
+                    return find_zsync_asset_url(root.get_object(), pattern);
+                } else if (root.get_node_type() == Json.NodeType.ARRAY) {
+                    var array = root.get_array();
+                    for (uint i = 0; i < array.get_length(); i++) {
+                        var node = array.get_element(i);
+                        if (node.get_node_type() != Json.NodeType.OBJECT) continue;
+                        
+                        var obj = node.get_object();
+                        // For specific tag, match it
+                        if (tag != "latest" && obj.has_member("tag_name")) {
+                            var release_tag = obj.get_string_member("tag_name");
+                            if (release_tag != tag && !release_tag.has_prefix(tag)) {
+                                continue;
+                            }
+                        }
+                        
+                        var url = find_zsync_asset_url(obj, pattern);
+                        if (url != null) return url;
+                    }
+                }
+            } catch (Error e) {
+                warning("Failed to resolve gh-releases-zsync: %s", e.message);
+            }
+            
+            return null;
+        }
+
+        /**
+         * Find zsync asset URL in a GitHub release object matching the pattern.
+         */
+        private string? find_zsync_asset_url(Json.Object release_obj, string pattern) {
+            if (!release_obj.has_member("assets")) return null;
+            
+            var assets = release_obj.get_array_member("assets");
+            for (uint i = 0; i < assets.get_length(); i++) {
+                var node = assets.get_element(i);
+                if (node.get_node_type() != Json.NodeType.OBJECT) continue;
+                
+                var asset = node.get_object();
+                if (!asset.has_member("name") || !asset.has_member("browser_download_url")) continue;
+                
+                var name = asset.get_string_member("name");
+                if (pattern_matches_zsync(pattern, name)) {
+                    return asset.get_string_member("browser_download_url");
+                }
+            }
+            return null;
+        }
+
+        /**
+         * Simple glob pattern matching for zsync filename patterns.
+         */
+        private static bool pattern_matches_zsync(string pattern, string text) {
+            int pi = 0;
+            int ti = 0;
+            int star_pi = -1;
+            int star_ti = -1;
+            
+            while (ti < text.length) {
+                if (pi < pattern.length && (pattern[pi] == text[ti] || pattern[pi] == '?')) {
+                    pi++;
+                    ti++;
+                } else if (pi < pattern.length && pattern[pi] == '*') {
+                    star_pi = pi + 1;
+                    star_ti = ti;
+                    pi++;
+                } else if (star_pi != -1) {
+                    pi = star_pi;
+                    star_ti++;
+                    ti = star_ti;
+                } else {
+                    return false;
+                }
+            }
+            
+            while (pi < pattern.length && pattern[pi] == '*') {
+                pi++;
+            }
+            
+            return pi == pattern.length;
         }
 
         private string? read_update_url(InstallationRecord record) {
@@ -355,6 +535,14 @@ namespace AppManager.Core {
         // ─────────────────────────────────────────────────────────────────────
 
         private UpdateProbeResult probe_record(InstallationRecord record, GLib.Cancellable? cancellable) {
+            // Check if app uses zsync delta updates
+            if (record.zsync_update_info != null && record.zsync_update_info.strip() != "") {
+                var zsync_source = resolve_zsync_source(record.zsync_update_info);
+                if (zsync_source != null) {
+                    return probe_zsync(record, zsync_source, cancellable);
+                }
+            }
+            
             var update_url = read_update_url(record);
             if (update_url == null || update_url.strip() == "") {
                 return new UpdateProbeResult(record, false, null, UpdateSkipReason.NO_UPDATE_URL, I18n.tr("No update address configured"));
@@ -363,6 +551,11 @@ namespace AppManager.Core {
             var source = resolve_update_source(update_url, record.version);
             if (source == null) {
                 return new UpdateProbeResult(record, false, null, UpdateSkipReason.UNSUPPORTED_SOURCE, I18n.tr("Update source not supported"));
+            }
+
+            // Handle zsync sources (legacy path for apps with zsync URL in update_link)
+            if (source is ZsyncDirectSource) {
+                return probe_zsync(record, source, cancellable);
             }
 
             if (source is DirectUrlSource) {
@@ -404,6 +597,15 @@ namespace AppManager.Core {
         }
 
         private UpdateResult update_record(InstallationRecord record, GLib.Cancellable? cancellable) {
+            // Check if app uses zsync delta updates
+            if (record.zsync_update_info != null && record.zsync_update_info.strip() != "") {
+                var zsync_source = resolve_zsync_source(record.zsync_update_info);
+                if (zsync_source != null) {
+                    record_checking(record);
+                    return update_zsync(record, zsync_source, cancellable);
+                }
+            }
+            
             var update_url = read_update_url(record);
             if (update_url == null || update_url.strip() == "") {
                 record_skipped(record, UpdateSkipReason.NO_UPDATE_URL);
@@ -418,6 +620,11 @@ namespace AppManager.Core {
                 record_skipped(record, UpdateSkipReason.UNSUPPORTED_SOURCE);
                 log_update_event(record, "SKIP", "unsupported update source");
                 return new UpdateResult(record, UpdateStatus.SKIPPED, I18n.tr("Update source not supported"), null, UpdateSkipReason.UNSUPPORTED_SOURCE);
+            }
+
+            // Handle zsync sources (legacy path for apps with zsync URL in update_link)
+            if (source is ZsyncDirectSource) {
+                return update_zsync(record, source, cancellable);
             }
 
             if (source is DirectUrlSource) {
@@ -925,6 +1132,211 @@ namespace AppManager.Core {
             } catch (Error e) {
                 warning("Failed to write update log: %s", e.message);
             }
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Zsync Updates
+        // ─────────────────────────────────────────────────────────────────────
+
+        /**
+         * Check if zsync update is available for a record.
+         * Performs HEAD request to check zsync file accessibility and compare fingerprints.
+         */
+        private UpdateProbeResult probe_zsync(InstallationRecord record, UpdateSource source, GLib.Cancellable? cancellable) {
+            if (!(source is ZsyncDirectSource)) {
+                return new UpdateProbeResult(record, false, null, UpdateSkipReason.UNSUPPORTED_SOURCE, I18n.tr("Unknown zsync source type"));
+            }
+            
+            try {
+                var zsync_source = source as ZsyncDirectSource;
+                // Check if zsync file is accessible
+                var message = send_head(zsync_source.zsync_url, cancellable);
+                var fingerprint = build_direct_fingerprint(message);
+                var stored = get_stored_fingerprint(record);
+                
+                if (stored != null && fingerprint != null && stored == fingerprint) {
+                    return new UpdateProbeResult(record, false, fingerprint, UpdateSkipReason.ALREADY_CURRENT, I18n.tr("Already up to date"));
+                }
+                
+                return new UpdateProbeResult(record, true, fingerprint);
+            } catch (Error e) {
+                warning("Failed to probe zsync for %s: %s", record.name, e.message);
+                return new UpdateProbeResult(record, false, null, null, e.message);
+            }
+        }
+
+        /**
+         * Perform a zsync delta update.
+         * Uses zsync2 to efficiently download only changed blocks.
+         */
+        private UpdateResult update_zsync(InstallationRecord record, UpdateSource source, GLib.Cancellable? cancellable) {
+            if (!(source is ZsyncDirectSource)) {
+                record_skipped(record, UpdateSkipReason.UNSUPPORTED_SOURCE);
+                return new UpdateResult(record, UpdateStatus.SKIPPED, I18n.tr("Unknown zsync source"), null, UpdateSkipReason.UNSUPPORTED_SOURCE);
+            }
+            
+            var zsync_source = source as ZsyncDirectSource;
+            var zsync_url = zsync_source.zsync_url;
+            
+            var zsync_bin = AppPaths.zsync_path;
+            if (zsync_bin == null) {
+                // Fall back to full download if zsync is not available
+                warning("zsync2 not available, falling back to full download for %s", record.name);
+                return update_zsync_fallback(record, zsync_url, cancellable);
+            }
+
+            try {
+                record_downloading(record);
+
+                // Create temp directory for zsync output
+                var temp_dir = AppManager.Utils.FileUtils.create_temp_dir("appmgr-zsync-");
+                
+                try {
+                    // Run zsync2 with the existing AppImage as seed
+                    var output_path = run_zsync(zsync_bin, zsync_url, record.installed_path, temp_dir, cancellable);
+                    
+                    // Upgrade using the downloaded file
+                    var new_record = installer.upgrade(output_path, record);
+                    
+                    // Update fingerprint for future checks
+                    try {
+                        var message = send_head(zsync_url, null);
+                        if (new_record != null) {
+                            store_fingerprint(new_record, message);
+                            registry.persist();
+                        }
+                    } catch (Error e) {
+                        // Non-fatal: fingerprint update failed
+                    }
+                    
+                    record_succeeded(record);
+                    log_update_event(record, "UPDATED", "zsync delta update");
+                    // Return new_record so the UI can refresh with updated data
+                    return new UpdateResult(new_record ?? record, UpdateStatus.UPDATED, I18n.tr("Updated"), null);
+                } finally {
+                    AppManager.Utils.FileUtils.remove_dir_recursive(temp_dir);
+                }
+            } catch (Error e) {
+                warning("Zsync update failed for %s: %s", record.name, e.message);
+                record_failed(record, e.message);
+                log_update_event(record, "FAILED", "zsync: %s".printf(e.message));
+                return new UpdateResult(record, UpdateStatus.FAILED, e.message);
+            }
+        }
+
+        /**
+         * Fallback to full download when zsync is not available.
+         */
+        private UpdateResult update_zsync_fallback(InstallationRecord record, string zsync_url, GLib.Cancellable? cancellable) {
+            try {
+                // Derive AppImage URL from zsync URL (remove .zsync suffix)
+                string download_url;
+                if (zsync_url.has_suffix(".zsync")) {
+                    download_url = zsync_url.substring(0, zsync_url.length - 6);
+                } else {
+                    record_skipped(record, UpdateSkipReason.UNSUPPORTED_SOURCE);
+                    return new UpdateResult(record, UpdateStatus.SKIPPED, I18n.tr("Cannot determine download URL from zsync URL"), null, UpdateSkipReason.UNSUPPORTED_SOURCE);
+                }
+
+                record_downloading(record);
+
+                var download = download_file(download_url, cancellable);
+                InstallationRecord? new_record = null;
+                try {
+                    new_record = installer.upgrade(download.file_path, record);
+                } finally {
+                    AppManager.Utils.FileUtils.remove_dir_recursive(download.temp_dir);
+                }
+
+                // Update fingerprint for future checks
+                try {
+                    var message = send_head(zsync_url, null);
+                    if (new_record != null) {
+                        store_fingerprint(new_record, message);
+                        registry.persist();
+                    }
+                } catch (Error e) {
+                    // Non-fatal
+                }
+
+                record_succeeded(record);
+                log_update_event(record, "UPDATED", "full download (zsync unavailable)");
+                // Return new_record so the UI can refresh with updated data
+                return new UpdateResult(new_record ?? record, UpdateStatus.UPDATED, I18n.tr("Updated"), null);
+            } catch (Error e) {
+                warning("Fallback update failed for %s: %s", record.name, e.message);
+                record_failed(record, e.message);
+                log_update_event(record, "FAILED", e.message);
+                return new UpdateResult(record, UpdateStatus.FAILED, e.message);
+            }
+        }
+
+        /**
+         * Execute zsync2 to perform delta download.
+         * @param zsync_path Path to zsync2 binary
+         * @param zsync_url URL to the .zsync file
+         * @param seed_path Path to existing AppImage to use as seed
+         * @param output_dir Directory to write the output file
+         * @param cancellable Optional cancellable
+         * @return Path to the downloaded AppImage
+         */
+        private string run_zsync(string zsync_path, string zsync_url, string seed_path, string output_dir, GLib.Cancellable? cancellable) throws Error {
+            // Determine output filename from zsync URL
+            var zsync_basename = Path.get_basename(zsync_url);
+            string output_name;
+            if (zsync_basename.has_suffix(".zsync")) {
+                output_name = zsync_basename.substring(0, zsync_basename.length - 6);
+            } else {
+                output_name = zsync_basename + ".AppImage";
+            }
+            var output_path = Path.build_filename(output_dir, output_name);
+
+            // Build zsync2 command
+            // zsync2 -i <seed> -o <output> <zsync_url>
+            string[] argv = {
+                zsync_path,
+                "-i", seed_path,
+                "-o", output_path,
+                zsync_url
+            };
+
+            debug("Running zsync2: %s", string.joinv(" ", argv));
+
+            string stdout_buf;
+            string stderr_buf;
+            int exit_status;
+
+            Process.spawn_sync(
+                output_dir,
+                argv,
+                Environ.get(),
+                SpawnFlags.SEARCH_PATH,
+                null,
+                out stdout_buf,
+                out stderr_buf,
+                out exit_status
+            );
+
+            if (exit_status != 0) {
+                var error_msg = stderr_buf.strip();
+                if (error_msg == "") {
+                    error_msg = stdout_buf.strip();
+                }
+                if (error_msg == "") {
+                    error_msg = "zsync2 exited with code %d".printf(exit_status);
+                }
+                throw new GLib.IOError.FAILED("zsync failed: %s", error_msg);
+            }
+
+            // Verify output file exists
+            if (!FileUtils.test(output_path, FileTest.EXISTS)) {
+                throw new GLib.IOError.FAILED("zsync did not produce output file");
+            }
+
+            // Make executable
+            FileUtils.chmod(output_path, 0755);
+
+            return output_path;
         }
 
         // ─────────────────────────────────────────────────────────────────────
