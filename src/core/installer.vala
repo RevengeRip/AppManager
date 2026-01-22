@@ -347,6 +347,10 @@ namespace AppManager.Core {
                         zsync_info = update_info;
                         // Use normalized URL as the display update link
                         original_update_url = Updater.normalize_update_url(update_info);
+                        // If web page is blank, use the normalized zsync URL as web page
+                        if (original_homepage == null || original_homepage.strip() == "") {
+                            original_homepage = original_update_url;
+                        }
                     } else {
                         // Not zsync, use as regular update URL
                         original_update_url = update_info;
