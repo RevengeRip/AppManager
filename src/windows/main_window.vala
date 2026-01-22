@@ -1232,6 +1232,8 @@ namespace AppManager {
         public void present_about_dialog() {
             var dialog = new Adw.AboutDialog.from_appdata(APPDATA_RESOURCE, null);
             dialog.version = APPLICATION_VERSION;
+            string[] credits = { "Contributors https://github.com/kem-a/AppManager/graphs/contributors" };
+            dialog.add_credit_section(I18n.tr("Credits"), credits);
             dialog.present(this);
         }
 
