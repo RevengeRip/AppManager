@@ -14,6 +14,7 @@ namespace AppManager.Core {
         public string? startup_wm_class { get; set; }
         public bool terminal { get; set; }
         public bool no_display { get; set; }
+        public string? mime_type { get; set; }
         public string? appimage_homepage { get; set; }
         public string? appimage_update_url { get; set; }
         public string? appimage_version { get; set; }
@@ -41,6 +42,7 @@ namespace AppManager.Core {
             keywords = get_string("Keywords");
             categories = get_string("Categories");
             startup_wm_class = get_string("StartupWMClass");
+            mime_type = get_string("MimeType");
             terminal = get_boolean("Terminal");
             no_display = get_boolean("NoDisplay");
             actions = get_string("Actions");
@@ -69,6 +71,7 @@ namespace AppManager.Core {
             set_string("Keywords", keywords);
             set_string("Categories", categories);
             set_string("StartupWMClass", startup_wm_class);
+            set_string("MimeType", mime_type);
             set_boolean("Terminal", terminal);
             set_boolean("NoDisplay", no_display);
             set_string("Actions", actions);
@@ -88,6 +91,7 @@ namespace AppManager.Core {
             set_string("Keywords", keywords);
             set_string("Categories", categories);
             set_string("StartupWMClass", startup_wm_class);
+            set_string("MimeType", mime_type);
             set_boolean("Terminal", terminal);
             set_boolean("NoDisplay", no_display);
             set_string("Actions", actions);

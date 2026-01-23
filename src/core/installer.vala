@@ -90,6 +90,10 @@ namespace AppManager.Core {
                 debug("Installer: calling registry.register() for %s", record.name);
                 registry.register(record);
                 debug("Installer: registry.register() completed");
+                
+                // Update MIME database so file associations work
+                update_desktop_database();
+                
                 return record;
             } catch (Error e) {
                 // Cleanup on failure
@@ -454,6 +458,9 @@ namespace AppManager.Core {
                     File.new_for_path(record.bin_symlink).delete(null);
                 }
                 registry.unregister(record.id);
+                
+                // Update MIME database after removing desktop file
+                update_desktop_database();
             } catch (Error e) {
                 throw new InstallerError.UNINSTALL_FAILED(e.message);
             }
@@ -954,6 +961,24 @@ namespace AppManager.Core {
                 entry.save();
             } catch (Error e) {
                 warning("Failed to sanitize uninstall action for %s: %s", record.name, e.message);
+            }
+        }
+
+        /**
+         * Updates the MIME database and desktop file cache so that file associations work.
+         * Runs update-desktop-database on ~/.local/share/applications.
+         */
+        private void update_desktop_database() {
+            try {
+                string[] argv = { "update-desktop-database", AppPaths.desktop_dir };
+                int exit_status;
+                Process.spawn_sync(null, argv, null, SpawnFlags.SEARCH_PATH, null, null, null, out exit_status);
+                if (exit_status != 0) {
+                    debug("update-desktop-database returned non-zero exit status: %d", exit_status);
+                }
+            } catch (Error e) {
+                // update-desktop-database may not be available on all systems
+                debug("Failed to run update-desktop-database: %s", e.message);
             }
         }
     }
