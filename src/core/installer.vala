@@ -364,13 +364,9 @@ namespace AppManager.Core {
                 // Derive icon name without path and extension
                 var icon_name_for_desktop = derive_icon_name(original_icon_name, final_slug);
                 
-                // Install icon to appropriate directory based on format:
-                // - SVG icons go to hicolor/scalable/apps/ (freedesktop.org spec, found by GTK theme)
-                // - PNG icons go to flat icons/ dir (loaded by file path)
+                // Install icon to flat ~/.local/share/icons directory
                 var icon_extension = detect_icon_extension(icon_path);
-                var is_svg = icon_extension.down() == ".svg";
-                var icon_target_dir = is_svg ? AppPaths.scalable_icons_dir : AppPaths.icons_dir;
-                var stored_icon = Path.build_filename(icon_target_dir, "%s%s".printf(icon_name_for_desktop, icon_extension));
+                var stored_icon = Path.build_filename(AppPaths.icons_dir, "%s%s".printf(icon_name_for_desktop, icon_extension));
                 Utils.FileUtils.file_copy(icon_path, stored_icon);
                 
                 // Derive fallback StartupWMClass from bundled desktop file name (without .desktop extension)

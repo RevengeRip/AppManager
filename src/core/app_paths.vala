@@ -82,18 +82,6 @@ namespace AppManager.Core {
             }
         }
 
-        /**
-         * Directory for scalable (SVG) icons following freedesktop.org Icon Theme Specification.
-         * SVG icons should be installed here so GTK can find them by icon name.
-         */
-        public static string scalable_icons_dir {
-            owned get {
-                var dir = Path.build_filename(Environment.get_user_data_dir(), "icons", "hicolor", "scalable", "apps");
-                DirUtils.create_with_parents(dir, 0755);
-                return dir;
-            }
-        }
-
         public static string local_bin_dir {
             owned get {
                 var dir = Path.build_filename(Environment.get_home_dir(), LOCAL_BIN_DIRNAME);
