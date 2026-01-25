@@ -5,6 +5,8 @@ namespace AppManager.Core {
         private HashTable<string, InstallationRecord> records;
         // History stores uninstalled apps' name and custom values as JSON objects
         private HashTable<string, Json.Object> history;
+        // Tracks apps currently being installed/uninstalled to skip during reconcile
+        private HashTable<string, bool> in_flight;
         private File registry_file;
         private Mutex registry_mutex = Mutex();
         public signal void changed();
@@ -12,6 +14,7 @@ namespace AppManager.Core {
         public InstallationRegistry() {
             records = new HashTable<string, InstallationRecord>(GLib.str_hash, GLib.str_equal);
             history = new HashTable<string, Json.Object>(GLib.str_hash, GLib.str_equal);
+            in_flight = new HashTable<string, bool>(GLib.str_hash, GLib.str_equal);
             registry_file = File.new_for_path(AppPaths.registry_file);
             // Constructor runs in single-threaded context, no locking needed
             load_unlocked();
@@ -109,12 +112,43 @@ namespace AppManager.Core {
             return null;
         }
 
+        /**
+         * Marks an app as "in-flight" (being installed/uninstalled).
+         * Reconcile will skip in-flight apps to prevent race conditions.
+         */
+        public void mark_in_flight(string id) {
+            registry_mutex.lock();
+            in_flight.insert(id, true);
+            registry_mutex.unlock();
+        }
+        
+        /**
+         * Clears the in-flight flag for an app.
+         */
+        public void clear_in_flight(string id) {
+            registry_mutex.lock();
+            in_flight.remove(id);
+            registry_mutex.unlock();
+        }
+        
+        /**
+         * Checks if an app is currently in-flight.
+         */
+        public bool is_in_flight(string id) {
+            registry_mutex.lock();
+            var result = in_flight.contains(id);
+            registry_mutex.unlock();
+            return result;
+        }
+
         public void register(InstallationRecord record) {
             registry_mutex.lock();
             records.insert(record.id, record);
             // Remove any history entry for this app name since it's now registered
             // This prevents duplicate entries in the JSON (don't persist yet - we'll save below)
             remove_history_unlocked(record.name);
+            // Clear in-flight flag now that registration is complete
+            in_flight.remove(record.id);
             save_unlocked();
             registry_mutex.unlock();
             notify_changed();
@@ -144,6 +178,8 @@ namespace AppManager.Core {
                 save_to_history_unlocked(record);
             }
             records.remove(id);
+            // Clear in-flight flag
+            in_flight.remove(id);
             save_unlocked();
             registry_mutex.unlock();
             notify_changed();
@@ -232,8 +268,14 @@ namespace AppManager.Core {
          */
         public void reload(bool notify = true) {
             registry_mutex.lock();
+            // Preserve in-flight apps across reload
+            var preserved_in_flight = new HashTable<string, bool>(GLib.str_hash, GLib.str_equal);
+            foreach (var id in in_flight.get_keys()) {
+                preserved_in_flight.insert(id, true);
+            }
             records = new HashTable<string, InstallationRecord>(GLib.str_hash, GLib.str_equal);
             history = new HashTable<string, Json.Object>(GLib.str_hash, GLib.str_equal);
+            in_flight = preserved_in_flight;
             load_unlocked();
             registry_mutex.unlock();
             if (notify) {
@@ -253,6 +295,12 @@ namespace AppManager.Core {
             var records_to_remove = new Gee.ArrayList<string>();
             
             foreach (var record in records.get_values()) {
+                // Skip apps that are currently being installed/uninstalled
+                if (in_flight.contains(record.id)) {
+                    debug("Skipping in-flight app during reconcile: %s", record.name);
+                    continue;
+                }
+                
                 var installed_file = File.new_for_path(record.installed_path);
                 if (!installed_file.query_exists()) {
                     debug("Found orphaned record: %s (path: %s)", record.name, record.installed_path);

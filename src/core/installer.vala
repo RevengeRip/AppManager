@@ -48,6 +48,10 @@ namespace AppManager.Core {
             InstallMode mode = override_mode;
 
             var record = new InstallationRecord(metadata.checksum, metadata.display_name, mode);
+            
+            // Mark as in-flight immediately to prevent reconcile from interfering
+            registry.mark_in_flight(record.id);
+            
             record.source_path = metadata.path;
             record.source_checksum = metadata.checksum;
             
@@ -96,7 +100,8 @@ namespace AppManager.Core {
                 
                 return record;
             } catch (Error e) {
-                // Cleanup on failure
+                // Cleanup on failure and clear in-flight flag
+                registry.clear_in_flight(record.id);
                 cleanup_failed_installation(record);
                 throw e;
             }
@@ -271,8 +276,8 @@ namespace AppManager.Core {
                 if (desktop_entry.name != null && desktop_entry.name.strip() != "") {
                     desktop_name = desktop_entry.name.strip();
                 }
-                if (desktop_entry.version != null) {
-                    desktop_version = desktop_entry.version;
+                if (desktop_entry.appimage_version != null) {
+                    desktop_version = desktop_entry.appimage_version;
                 }
                 
                 // Fall back to metainfo if no version from desktop entry
@@ -440,6 +445,13 @@ namespace AppManager.Core {
 
         private void uninstall_sync(InstallationRecord record) throws Error {
             try {
+                // Mark as in-flight and unregister FIRST to prevent reconcile race conditions
+                // This ensures the record is removed from registry before the file is deleted,
+                // so DirectoryMonitor won't see it as orphaned during the deletion.
+                registry.mark_in_flight(record.id);
+                registry.unregister(record.id);
+                
+                // Now safely delete the files
                 var installed_file = File.new_for_path(record.installed_path);
                 if (installed_file.query_exists()) {
                     if (installed_file.query_file_type(FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
@@ -457,11 +469,12 @@ namespace AppManager.Core {
                 if (record.bin_symlink != null && File.new_for_path(record.bin_symlink).query_exists()) {
                     File.new_for_path(record.bin_symlink).delete(null);
                 }
-                registry.unregister(record.id);
                 
                 // Update MIME database after removing desktop file
                 update_desktop_database();
             } catch (Error e) {
+                // Clear in-flight flag on error
+                registry.clear_in_flight(record.id);
                 throw new InstallerError.UNINSTALL_FAILED(e.message);
             }
         }

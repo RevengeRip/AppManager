@@ -6,7 +6,6 @@ namespace AppManager.Core {
         private string? file_path;
 
         public string? name { get; set; }
-        public string? version { get; set; }
         public string? exec { get; set; }
         public string? icon { get; set; }
         public string? keywords { get; set; }
@@ -53,11 +52,6 @@ namespace AppManager.Core {
             appimage_homepage = get_string("X-AppImage-Homepage");
             appimage_update_url = get_string("X-AppImage-UpdateURL");
             appimage_version = get_string("X-AppImage-Version") ?? find_key_in_any_group("X-AppImage-Version");
-            
-            // Use X-AppImage-Version for app version (standard Version field is desktop spec version, not app version)
-            if (appimage_version != null && appimage_version.strip() != "") {
-                version = appimage_version;
-            }
         }
 
         public void save(string? path = null) throws Error {
@@ -67,7 +61,6 @@ namespace AppManager.Core {
             }
 
             set_string("Name", name);
-            set_string("Version", version);
             set_string("Exec", exec);
             set_string("Icon", icon);
             set_string("Keywords", keywords);
@@ -87,7 +80,6 @@ namespace AppManager.Core {
 
         public string to_data() {
             set_string("Name", name);
-            set_string("Version", version);
             set_string("Exec", exec);
             set_string("Icon", icon);
             set_string("Keywords", keywords);
