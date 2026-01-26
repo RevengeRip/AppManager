@@ -38,7 +38,7 @@ namespace AppManager {
             // Add log button to header
             var log_button = new Gtk.Button.from_icon_name("text-x-generic-symbolic");
             log_button.valign = Gtk.Align.CENTER;
-            // log_button.add_css_class("flat");
+            log_button.add_css_class("flat");
             log_button.tooltip_text = I18n.tr("Open update log");
             var log_file = File.new_for_path(AppPaths.updates_log_file);
             log_button.sensitive = log_file.query_exists();
@@ -107,7 +107,7 @@ namespace AppManager {
             thumbnailer_row.title = I18n.tr("AppImage Thumbnailer");
             thumbnailer_row.subtitle = I18n.tr("Install appimage-thumbnailer to generate thumbnails for AppImages");
             thumbnailer_row.activatable = true;
-            thumbnailer_row.add_suffix(new Gtk.Image.from_icon_name("adw-external-link-symbolic"));
+            thumbnailer_row.add_suffix(new Gtk.Image.from_icon_name("external-link-symbolic"));
             thumbnailer_row.activated.connect(() => {
                 UiUtils.open_url("https://github.com/kem-a/appimage-thumbnailer");
             });

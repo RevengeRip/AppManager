@@ -351,7 +351,7 @@ namespace AppManager {
                 restore_webpage_button.set_visible(record.custom_web_page != null);
             });
             
-            var open_web_button = new Gtk.Button.from_icon_name("adw-external-link-symbolic");
+            var open_web_button = new Gtk.Button.from_icon_name("external-link-symbolic");
             open_web_button.add_css_class("flat");
             open_web_button.set_valign(Gtk.Align.CENTER);
             open_web_button.tooltip_text = I18n.tr("Open web page");
@@ -474,7 +474,6 @@ namespace AppManager {
                 
                 var delete_button = new Gtk.Button.from_icon_name("user-trash-symbolic");
                 delete_button.add_css_class("flat");
-                delete_button.add_css_class("circular");
                 delete_button.set_valign(Gtk.Align.CENTER);
                 delete_button.tooltip_text = I18n.tr("Remove variable");
                 delete_button.clicked.connect(() => {
@@ -498,8 +497,7 @@ namespace AppManager {
             var add_row = new Adw.ActionRow();
             add_row.set_activatable(false);
             
-            var add_button = new Gtk.Button();
-            add_button.set_label("+");
+            var add_button = new Gtk.Button.from_icon_name("list-add-symbolic");
             add_button.add_css_class("flat");
             add_button.set_halign(Gtk.Align.CENTER);
             add_button.set_margin_top(8);
