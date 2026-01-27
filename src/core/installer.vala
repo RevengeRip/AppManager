@@ -935,9 +935,11 @@ namespace AppManager.Core {
                 if (value.strip() == "") {
                     if (key != "Exec") {
                         try {
-                            keyfile.remove_key("Desktop Entry", key);
+                            if (keyfile.has_key("Desktop Entry", key)) {
+                                keyfile.remove_key("Desktop Entry", key);
+                            }
                         } catch (Error e) {
-                            // Key may not exist
+                            debug("Failed to remove key %s from desktop entry: %s", key, e.message);
                         }
                     } else {
                         keyfile.set_string("Desktop Entry", key, value);

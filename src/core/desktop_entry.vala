@@ -109,7 +109,9 @@ namespace AppManager.Core {
                 if (key_file.has_key(group, key)) {
                     key_file.remove_key(group, key);
                 }
-            } catch (Error e) {}
+            } catch (Error e) {
+                debug("Failed to remove key %s from group %s: %s", key, group, e.message);
+            }
         }
 
         public string? get_string(string key, string group = "Desktop Entry") {
@@ -118,7 +120,9 @@ namespace AppManager.Core {
                     var val = key_file.get_string(group, key);
                     return val.strip() != "" ? val.strip() : null;
                 }
-            } catch (Error e) {}
+            } catch (Error e) {
+                debug("Failed to get string key %s from group %s: %s", key, group, e.message);
+            }
             return null;
         }
 
@@ -127,7 +131,9 @@ namespace AppManager.Core {
                 if (key_file.has_key(group, key)) {
                     return key_file.get_boolean(group, key);
                 }
-            } catch (Error e) {}
+            } catch (Error e) {
+                debug("Failed to get boolean key %s from group %s: %s", key, group, e.message);
+            }
             return false;
         }
 
@@ -139,7 +145,9 @@ namespace AppManager.Core {
                     if (key_file.has_key(group, key)) {
                         key_file.remove_key(group, key);
                     }
-                } catch (Error e) {}
+                } catch (Error e) {
+                    debug("Failed to remove key %s when setting empty value: %s", key, e.message);
+                }
             }
         }
 
@@ -153,7 +161,9 @@ namespace AppManager.Core {
                     if (key_file.has_key(group, key)) {
                         key_file.remove_key(group, key);
                     }
-                } catch (Error e) {}
+                } catch (Error e) {
+                    debug("Failed to remove boolean key %s: %s", key, e.message);
+                }
             }
         }
         
@@ -168,7 +178,7 @@ namespace AppManager.Core {
                     }
                 }
             } catch (Error e) {
-                // Ignore errors when searching
+                debug("Error searching for key %s in groups: %s", key, e.message);
             }
             return null;
         }
