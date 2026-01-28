@@ -22,7 +22,6 @@ namespace AppManager.Core {
             this.registry = registry;
             this.settings = settings;
             this.uninstall_prefix = resolve_uninstall_prefix();
-            migrate_uninstall_execs();
         }
 
         public InstallationRecord install(string file_path, InstallMode override_mode = InstallMode.PORTABLE) throws Error {
@@ -952,34 +951,6 @@ namespace AppManager.Core {
                 GLib.FileUtils.set_contents(desktop_file_path, data);
             } catch (Error e) {
                 warning("Failed to update desktop file %s: %s", desktop_file_path, e.message);
-            }
-        }
-
-        private void migrate_uninstall_execs() {
-            foreach (var record in registry.list()) {
-                if (record.desktop_file == null || record.desktop_file == "") {
-                    continue;
-                }
-                try {
-                    sanitize_uninstall_action(record);
-                } catch (Error e) {
-                    warning("Failed to sanitize uninstall action for %s: %s", record.name, e.message);
-                }
-            }
-        }
-
-        private void sanitize_uninstall_action(InstallationRecord record) throws Error {
-            if (record.desktop_file == null || record.installed_path == null) {
-                return;
-            }
-            
-            try {
-                var entry = new DesktopEntry(record.desktop_file);
-                var uninstall_exec = build_uninstall_exec(record.installed_path);
-                entry.set_action_group("Uninstall", _("Move to Trash"), uninstall_exec, "user-trash");
-                entry.save();
-            } catch (Error e) {
-                warning("Failed to sanitize uninstall action for %s: %s", record.name, e.message);
             }
         }
 
