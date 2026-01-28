@@ -9,6 +9,28 @@
   <summary>Drag-and-drop AppImage installer for GNOME</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>GPL-3.0-or-later</project_license>
+
+  <!-- Copyright notice -->
+  <custom>
+    <value key="Copyright">© 2025 Arnis Kemlers</value>
+  </custom>
+
+  <!-- Bundled third-party components -->
+  <bundle type="legal">
+    <name>7-Zip</name>
+    <copyright>© 1999-2024 Igor Pavlov</copyright>
+    <license>LGPL-2.1-or-later</license>
+  </bundle>
+  <bundle type="legal">
+    <name>DwarFS</name>
+    <copyright>© Marcus Holland-Moritz</copyright>
+    <license>GPL-3.0</license>
+  </bundle>
+  <bundle type="legal">
+    <name>zsync2</name>
+    <copyright>© AppImageCommunity, © Colin Phipps</copyright>
+    <license>Artistic-2.0</license>
+  </bundle>
   <description>
     <p>AppManager lets you install or uninstall AppImages with a familiar drag-and-drop workflow inspired by macOS. It handles desktop integration, icon extraction, executable bits, and Nautilus context menus.</p>
   </description>

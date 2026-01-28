@@ -1184,7 +1184,85 @@ namespace AppManager {
             dialog.version = APPLICATION_VERSION;
             string[] credits = { "Contributors https://github.com/kem-a/AppManager/graphs/contributors" };
             dialog.add_credit_section(_("Credits"), credits);
+
+            // Load legal sections from metainfo
+            load_legal_sections_from_appdata(dialog);
+
             dialog.present(this);
+        }
+
+        private void load_legal_sections_from_appdata(Adw.AboutDialog dialog) {
+            try {
+                var file = GLib.resources_open_stream(APPDATA_RESOURCE, GLib.ResourceLookupFlags.NONE);
+
+                // Read the entire resource
+                var data = new uint8[8192];
+                size_t bytes_read;
+                var content = new StringBuilder();
+                while ((bytes_read = file.read(data)) > 0) {
+                    content.append_len((string) data, (ssize_t) bytes_read);
+                }
+
+                // Parse copyright from custom section
+                var copyright_regex = /<value key="Copyright">([^<]+)<\/value>/;
+                GLib.MatchInfo match;
+                if (copyright_regex.match(content.str, 0, out match)) {
+                    dialog.copyright = match.fetch(1);
+                }
+
+                // Parse bundle elements for legal sections
+                var bundle_regex = /<bundle type="legal">\s*<name>([^<]+)<\/name>\s*<copyright>([^<]+)<\/copyright>\s*<license>([^<]+)<\/license>\s*<\/bundle>/s;
+                if (bundle_regex.match(content.str, 0, out match)) {
+                    do {
+                        var name = match.fetch(1);
+                        var copyright = match.fetch(2);
+                        var license_id = match.fetch(3);
+                        var license_type = spdx_to_gtk_license(license_id);
+                        var license_text = license_type == Gtk.License.CUSTOM ? license_id : null;
+                        dialog.add_legal_section(name, copyright, license_type, license_text);
+                    } while (match.next());
+                }
+            } catch (Error e) {
+                warning("Failed to load legal sections from appdata: %s", e.message);
+            }
+        }
+
+        private Gtk.License spdx_to_gtk_license(string spdx_id) {
+            switch (spdx_id) {
+                case "GPL-2.0":
+                case "GPL-2.0-only":
+                    return Gtk.License.GPL_2_0;
+                case "GPL-2.0-or-later":
+                case "GPL-2.0+":
+                    return Gtk.License.GPL_2_0;
+                case "GPL-3.0":
+                case "GPL-3.0-only":
+                    return Gtk.License.GPL_3_0;
+                case "GPL-3.0-or-later":
+                case "GPL-3.0+":
+                    return Gtk.License.GPL_3_0;
+                case "LGPL-2.1":
+                case "LGPL-2.1-only":
+                case "LGPL-2.1-or-later":
+                case "LGPL-2.1+":
+                    return Gtk.License.LGPL_2_1;
+                case "LGPL-3.0":
+                case "LGPL-3.0-only":
+                case "LGPL-3.0-or-later":
+                case "LGPL-3.0+":
+                    return Gtk.License.LGPL_3_0;
+                case "MIT":
+                    return Gtk.License.MIT_X11;
+                case "BSD-2-Clause":
+                case "BSD-3-Clause":
+                    return Gtk.License.BSD;
+                case "Apache-2.0":
+                    return Gtk.License.APACHE_2_0;
+                case "Artistic-2.0":
+                    return Gtk.License.ARTISTIC;
+                default:
+                    return Gtk.License.CUSTOM;
+            }
         }
 
         private void show_detail_page(InstallationRecord record) {
