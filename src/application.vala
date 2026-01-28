@@ -12,6 +12,8 @@ namespace AppManager {
         private BackgroundUpdateService? bg_update_service;
         private DirectoryMonitor? directory_monitor;
         private PreferencesDialog? preferences_dialog;
+        // Track lock files owned by this instance to clean up on exit
+        private HashSet<string> owned_lock_files = new HashSet<string>();
         private static bool opt_version = false;
         private static bool opt_help = false;
         private static bool opt_background_update = false;
@@ -211,11 +213,24 @@ Examples:
         }
 
         private void show_drop_window(GLib.File file) {
+            var path = file.get_path();
+            
+            // Prevent duplicate windows using file-based locking
+            if (!try_acquire_drop_window_lock(path)) {
+                debug("Drop window already open for %s (locked by another instance), ignoring", path);
+                return;
+            }
+            
             try {
-                debug("Opening drop window for %s", file.get_path());
-                var window = new DropWindow(this, registry, installer, settings, file.get_path());
+                debug("Opening drop window for %s", path);
+                var window = new DropWindow(this, registry, installer, settings, path);
+                window.close_request.connect(() => {
+                    release_drop_window_lock(path);
+                    return false;
+                });
                 window.present();
             } catch (Error e) {
+                release_drop_window_lock(path);
                 critical("Failed to open drop window: %s", e.message);
                 this.activate();
             }
@@ -255,11 +270,19 @@ Examples:
                 activate();
                 return;
             }
+            
+            // Prevent duplicate windows using file-based locking
+            if (!try_acquire_drop_window_lock(appimage)) {
+                debug("Self-install window already open for %s (locked by another instance), ignoring", appimage);
+                return;
+            }
+            
             try {
                 debug("Opening self-install window for %s", appimage);
                 var window = new DropWindow(this, registry, installer, settings, appimage);
                 // After successful install, show the main window
                 window.close_request.connect(() => {
+                    release_drop_window_lock(appimage);
                     // Check if we're now installed
                     if (is_self_installed()) {
                         // Re-activate to show main window
@@ -272,6 +295,7 @@ Examples:
                 });
                 window.present();
             } catch (Error e) {
+                release_drop_window_lock(appimage);
                 critical("Failed to open self-install window: %s", e.message);
                 // Fall back to main window
                 if (main_window == null) {
@@ -558,6 +582,80 @@ Examples:
             // Run as persistent daemon - this will block until session ends
             bg_update_service.run_daemon();
             return 0;
+        }
+
+        /**
+         * Returns the path to the lock directory for drop window locks.
+         */
+        private string get_lock_dir() {
+            var dir = Path.build_filename(Environment.get_tmp_dir(), "app-manager-locks");
+            DirUtils.create_with_parents(dir, 0755);
+            return dir;
+        }
+
+        /**
+         * Returns the lock file path for a given AppImage path.
+         */
+        private string get_lock_file_path(string appimage_path) {
+            // Use checksum of the path to create a unique lock file name
+            var checksum = GLib.Checksum.compute_for_string(ChecksumType.MD5, appimage_path);
+            return Path.build_filename(get_lock_dir(), "drop-window-%s.lock".printf(checksum));
+        }
+
+        /**
+         * Tries to acquire an exclusive lock for opening a drop window.
+         * Returns true if the lock was acquired, false if already locked.
+         */
+        private bool try_acquire_drop_window_lock(string appimage_path) {
+            var lock_file_path = get_lock_file_path(appimage_path);
+            
+            // Check if lock file exists and is still valid (process still running)
+            if (GLib.FileUtils.test(lock_file_path, FileTest.EXISTS)) {
+                try {
+                    string contents;
+                    GLib.FileUtils.get_contents(lock_file_path, out contents);
+                    var pid = int.parse(contents.strip());
+                    
+                    // Check if the process is still running
+                    if (pid > 0 && Posix.kill(pid, 0) == 0) {
+                        // Process is still running, lock is valid
+                        return false;
+                    }
+                    // Process is dead, we can take over the lock
+                    debug("Stale lock file found for %s (pid %d is dead), taking over", appimage_path, pid);
+                } catch (Error e) {
+                    // Error reading lock file, try to remove and recreate
+                    debug("Error reading lock file: %s", e.message);
+                }
+            }
+            
+            // Create lock file with our PID
+            try {
+                var pid_str = "%d".printf(Posix.getpid());
+                GLib.FileUtils.set_contents(lock_file_path, pid_str);
+                owned_lock_files.add(lock_file_path);
+                return true;
+            } catch (Error e) {
+                warning("Failed to create lock file %s: %s", lock_file_path, e.message);
+                return false;
+            }
+        }
+
+        /**
+         * Releases the lock for a drop window.
+         */
+        private void release_drop_window_lock(string appimage_path) {
+            var lock_file_path = get_lock_file_path(appimage_path);
+            
+            if (owned_lock_files.contains(lock_file_path)) {
+                try {
+                    var file = File.new_for_path(lock_file_path);
+                    file.delete();
+                } catch (Error e) {
+                    debug("Failed to delete lock file %s: %s", lock_file_path, e.message);
+                }
+                owned_lock_files.remove(lock_file_path);
+            }
         }
 
     }
