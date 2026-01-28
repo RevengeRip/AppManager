@@ -544,6 +544,15 @@ namespace AppManager {
             return menu;
         }
 
+        private GLib.MenuModel build_sponsor_menu_model() {
+            var menu = new GLib.Menu();
+            menu.append(_("GitHub Sponsors"), "app.sponsor_github");
+            menu.append(_("Ko-fi"), "app.sponsor_kofi");
+            menu.append(_("Buy Me a Coffee"), "app.sponsor_bmac");
+            menu.append(_("Revolut"), "app.sponsor_revolut");
+            return menu;
+        }
+
         private Adw.ToolbarView create_toolbar_with_header(Gtk.Widget content, bool include_menu_button) {
             var toolbar = new Adw.ToolbarView();
             var header = new Adw.HeaderBar();
@@ -553,6 +562,14 @@ namespace AppManager {
                 search_button.icon_name = "system-search-symbolic";
                 search_button.tooltip_text = _("Search");
                 header.pack_start(search_button);
+
+                // Sponsor button with popover menu
+                var sponsor_button = new Gtk.MenuButton();
+                sponsor_button.icon_name = "emblem-favorite-symbolic";
+                sponsor_button.tooltip_text = _("Support this project");
+                sponsor_button.add_css_class("flat");
+                sponsor_button.menu_model = build_sponsor_menu_model();
+                header.pack_start(sponsor_button);
 
                 main_menu_button = new Gtk.MenuButton();
                 main_menu_button.set_icon_name("open-menu-symbolic");

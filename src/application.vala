@@ -129,6 +129,35 @@ Examples:
             });
             this.add_action(preferences_action);
 
+            // Sponsor actions
+            var sponsor_github = new GLib.SimpleAction("sponsor_github", null);
+            sponsor_github.activate.connect(() => {
+                var launcher = new Gtk.UriLauncher("https://github.com/sponsors/kem-a");
+                launcher.launch.begin(main_window, null);
+            });
+            this.add_action(sponsor_github);
+
+            var sponsor_kofi = new GLib.SimpleAction("sponsor_kofi", null);
+            sponsor_kofi.activate.connect(() => {
+                var launcher = new Gtk.UriLauncher("https://ko-fi.com/arnisk");
+                launcher.launch.begin(main_window, null);
+            });
+            this.add_action(sponsor_kofi);
+
+            var sponsor_bmac = new GLib.SimpleAction("sponsor_bmac", null);
+            sponsor_bmac.activate.connect(() => {
+                var launcher = new Gtk.UriLauncher("https://buymeacoffee.com/arnisk");
+                launcher.launch.begin(main_window, null);
+            });
+            this.add_action(sponsor_bmac);
+
+            var sponsor_revolut = new GLib.SimpleAction("sponsor_revolut", null);
+            sponsor_revolut.activate.connect(() => {
+                var launcher = new Gtk.UriLauncher("https://revolut.me/arnisk");
+                launcher.launch.begin(main_window, null);
+            });
+            this.add_action(sponsor_revolut);
+
             var close_action = new GLib.SimpleAction("close_window", null);
             close_action.activate.connect(() => {
                 var active = this.get_active_window();
