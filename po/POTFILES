@@ -1,4 +1,5 @@
 # List of source files containing translatable strings
+
 src/application.vala
 src/main.vala
 src/core/background_update_service.vala

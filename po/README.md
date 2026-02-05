@@ -9,19 +9,19 @@
 
 | Language | Code | Status |
 | -------- | ---- | ------ |
-| German | de | 🟢 Complete |
-| Spanish | es | 🟢 Complete |
-| Estonian | et | 🟢 Complete |
-| Finnish | fi | 🟢 Complete |
-| French | fr | 🟢 Complete |
-| Italian | it | 🟢 Complete |
-| Japanese | ja | 🟢 Complete |
-| Lithuanian | lt | 🟢 Complete |
-| Latvian | lv | 🟢 Complete |
-| Norwegian Bokmål | nb | 🟢 Complete |
-| Portuguese (Brazil) | pt_BR | 🟢 Complete |
-| Swedish | sv | 🟢 Complete |
-| Chinese (Simplified) | zh_CN | 🟢 Complete |
+| German | de | 74% |
+| Spanish | es | 77% |
+| Estonian | et | 78% |
+| Finnish | fi | 77% |
+| French | fr | 75% |
+| Italian | it | 77% |
+| Japanese | ja | 77% |
+| Lithuanian | lt | 77% |
+| Latvian | lv | 77% |
+| Norwegian Bokmål | nb | 77% |
+| Portuguese (Brazil) | pt_BR | 77% |
+| Swedish | sv | 76% |
+| Chinese (Simplified) | zh_CN | 80% |
 
 ## Note
 

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: app-manager\n"
-"Report-Msgid-Bugs-To: https://github.com/kem-a/AppManager/issues\n"
-"POT-Creation-Date: 2026-01-27 12:00+0000\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-02-05 16:37+0200\n"
 "PO-Revision-Date: 2026-01-27 12:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Italian\n"
@@ -16,540 +16,1047 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-msgid "AppManager"
-msgstr "AppManager"
-
-msgid "My Apps"
-msgstr "Le mie app"
-
-msgid "Get more ..."
-msgstr "Ottieni altro ..."
-
-msgid "Find more AppImages"
-msgstr "Trova altri AppImage"
-
-msgid "Browse these sources to discover and download AppImages"
-msgstr "Sfoglia queste fonti per scoprire e scaricare AppImage"
-
-msgid "No AppImage apps installed"
-msgstr "Nessuna app AppImage installata"
-
-msgid "Download AppImage and double click to install with AppManager"
-msgstr "Scarica un AppImage e fai doppio clic per installarlo con AppManager"
-
-msgid "No results found"
-msgstr "Nessun risultato trovato"
-
-msgid "Updating..."
-msgstr "Aggiornamento..."
-
-msgid "Update available"
-msgstr "Aggiornamento disponibile"
-
-msgid "extracted"
-msgstr "estratto"
-
-msgid "Updated just now"
-msgstr "Aggiornato proprio ora"
-
-msgid "Installed just now"
-msgstr "Installato proprio ora"
-
-#, c-format
-msgid "Updated %d min ago"
-msgstr "Aggiornato %d min fa"
-
-#, c-format
-msgid "Installed %d min ago"
-msgstr "Installato %d min fa"
-
-#, c-format
-msgid "Updated %d hours ago"
-msgstr "Aggiornato %d ore fa"
-
-#, c-format
-msgid "Installed %d hours ago"
-msgstr "Installato %d ore fa"
-
-#, c-format
-msgid "Updated %d days ago"
-msgstr "Aggiornato %d giorni fa"
-
-#, c-format
-msgid "Installed %d days ago"
-msgstr "Installato %d giorni fa"
-
-msgid "Preferences"
-msgstr "Preferenze"
-
-msgid "Keyboard shortcuts"
-msgstr "Scorciatoie da tastiera"
-
-msgid "About AppManager"
-msgstr "Informazioni su AppManager"
-
-msgid "Quit"
-msgstr "Esci"
-
-msgid "Search"
-msgstr "Cerca"
-
-msgid "More actions"
-msgstr "Altre azioni"
-
-msgid "Search apps..."
-msgstr "Cerca app..."
-
-msgid "FUSE is not installed. Some AppImages may fail to run"
-msgstr "FUSE non è installato. Alcuni AppImage potrebbero non funzionare"
-
-msgid "Learn More"
-msgstr "Scopri di più"
-
-msgid "Updates already running"
-msgstr "Gli aggiornamenti sono già in esecuzione"
-
-msgid "Cancel update"
-msgstr "Annulla aggiornamento"
-
-msgid "Cancelling..."
-msgstr "Annullamento..."
-
-msgid "Update check cancelled"
-msgstr "Controllo aggiornamenti annullato"
-
-#, c-format
-msgid "%d app(s) have updates"
-msgstr "%d app hanno aggiornamenti"
-
-msgid "No updates available right now"
-msgstr "Nessun aggiornamento disponibile al momento"
-
-msgid "Nothing queued for updating"
-msgstr "Nulla in coda per l'aggiornamento"
-
-msgid "Update cancelled"
-msgstr "Aggiornamento annullato"
-
-msgid "Checking updates"
-msgstr "Controllo aggiornamenti"
-
-msgid "Update Apps"
-msgstr "Aggiorna app"
-
-msgid "Updating apps"
-msgstr "Aggiornamento app"
-
-msgid "Check updates"
-msgstr "Controlla aggiornamenti"
-
-msgid "No installed apps to update"
-msgstr "Nessuna app installata da aggiornare"
-
-#, c-format
-msgid "Updated %d app(s)"
-msgstr "%d app aggiornata/e"
-
-#, c-format
-msgid "%d update(s) failed"
-msgstr "%d aggiornamento/i fallito/i"
-
-msgid "Add update addresses in Details to enable updates"
-msgstr "Aggiungi indirizzi di aggiornamento nei Dettagli per abilitare gli aggiornamenti"
-
-msgid "All supported apps are already up to date"
-msgstr "Tutte le app supportate sono già aggiornate"
-
-#, c-format
-msgid "%d app(s) use unsupported update links"
-msgstr "%d app usano link di aggiornamento non supportati"
-
-#, c-format
-msgid "Update available for %s"
-msgstr "Aggiornamento disponibile per %s"
-
-msgid "General"
-msgstr "Generale"
-
-msgid "Navigation"
-msgstr "Navigazione"
-
-msgid "Window"
-msgstr "Finestra"
-
-msgid "Check for updates"
-msgstr "Controlla aggiornamenti"
-
-msgid "Show main menu"
-msgstr "Mostra menu principale"
-
-msgid "Show shortcuts"
-msgstr "Mostra scorciatoie"
-
-msgid "Close window"
-msgstr "Chiudi finestra"
-
-msgid "Quit AppManager"
-msgstr "Esci da AppManager"
-
-msgid "Credits"
-msgstr "Crediti"
-
-msgid "⚠️ '~/.local/bin' is not in $PATH. App will not launch from the terminal"
-msgstr "⚠️ '~/.local/bin' non è in $PATH. L'app non si avvierà dal terminale"
-
-msgid "Version unknown"
-msgstr "Versione sconosciuta"
-
-msgid "Show in Files"
-msgstr "Mostra nei file"
-
-msgid "Portable"
-msgstr "Portatile"
-
-msgid "Extracted"
-msgstr "Estratto"
-
-msgid "Terminal"
-msgstr "Terminale"
-
-msgid "This app supports efficient delta updates"
-msgstr "Questa app supporta gli aggiornamenti delta efficienti"
-
-msgid "Hidden"
-msgstr "Nascosto"
-
-msgid "Properties"
-msgstr "Proprietà"
-
-msgid "Command line arguments"
-msgstr "Argomenti riga di comando"
-
-msgid "Update info"
-msgstr "Info aggiornamento"
-
-msgid "How update links work"
-msgstr "Come funzionano i link di aggiornamento"
-
-msgid "Update Link"
-msgstr "Link di aggiornamento"
-
-msgid "Update link is managed by zsync and cannot be edited"
-msgstr "Il link di aggiornamento è gestito da zsync e non può essere modificato"
-
-msgid "Web Page"
-msgstr "Pagina web"
-
-msgid "Open web page"
-msgstr "Apri pagina web"
-
-msgid "Advanced"
-msgstr "Avanzate"
-
-msgid "Environment Variables"
-msgstr "Variabili d'ambiente"
-
-msgid "Set custom environment variables for this app"
-msgstr "Imposta variabili d'ambiente personalizzate per questa app"
-
-msgid "NAME"
-msgstr "NOME"
-
-msgid "value"
-msgstr "valore"
-
-msgid "Remove variable"
-msgstr "Rimuovi variabile"
-
-msgid "Keywords"
-msgstr "Parole chiave"
-
-msgid "Icon name"
-msgstr "Nome icona"
-
-msgid "Startup WM Class"
-msgstr "Classe WM di avvio"
-
-msgid "Version"
-msgstr "Versione"
-
-msgid "Hide from app drawer"
-msgstr "Nascondi dal cassetto app"
-
-msgid "Don't show in application menu"
-msgstr "Non mostrare nel menu applicazioni"
-
-msgid "Add to $PATH"
-msgstr "Aggiungi a $PATH"
-
-msgid "Create a launcher in ~/.local/bin so you can run it from the terminal"
-msgstr "Crea un lanciatore in ~/.local/bin per eseguirlo dal terminale"
-
-msgid "Actions"
-msgstr "Azioni"
-
-msgid "Extract AppImage"
-msgstr "Estrai AppImage"
-
-msgid "Move to Trash"
-msgstr "Sposta nel cestino"
-
-msgid "Restore default"
-msgstr "Ripristina predefinito"
-
-msgid "Checking..."
-msgstr "Controllo..."
-
-msgid "Update"
-msgstr "Aggiorna"
-
-msgid "Check Update"
-msgstr "Controlla aggiornamento"
-
-msgid "Update info lets AppManager fetch new builds for you. Paste the download link and AppManager will do the rest."
-msgstr "Le info di aggiornamento permettono ad AppManager di recuperare le nuove versioni per te. Incolla il link di download e AppManager farà il resto."
-
-msgid "Currently GitHub and GitLab URL formats are fully supported. Direct download links also work if the server provides Last-Modified or Content-Length headers."
-msgstr "Attualmente i formati URL di GitHub e GitLab sono completamente supportati. I link di download diretto funzionano anche se il server fornisce gli header Last-Modified o Content-Length."
-
-msgid "Update links"
-msgstr "Link di aggiornamento"
-
-msgid "Got it"
-msgstr "Capito"
-
-msgid "Extracting will unpack the application so it opens faster, but it will consume more disk space. This action cannot be reversed automatically."
-msgstr "L'estrazione scompatterà l'applicazione per aprirla più velocemente, ma consumerà più spazio su disco. Questa azione non può essere annullata automaticamente."
-
-msgid "Extract application?"
-msgstr "Estrarre l'applicazione?"
-
-msgid "Cancel"
-msgstr "Annulla"
-
-msgid "Extract"
-msgstr "Estrai"
-
-msgid "Automatic updates"
-msgstr "Aggiornamenti automatici"
-
-msgid "Configure automatic update checking"
-msgstr "Configura il controllo automatico degli aggiornamenti"
-
-msgid "Open update log"
-msgstr "Apri registro aggiornamenti"
-
-msgid "Background update check"
-msgstr "Controllo aggiornamenti in background"
-
-msgid "Will notify when new app updates are available"
-msgstr "Notificherà quando saranno disponibili nuovi aggiornamenti"
-
-msgid "Auto update apps"
-msgstr "Aggiorna app automaticamente"
-
-msgid "Will update apps automatically in background"
-msgstr "Aggiornerà le app automaticamente in background"
-
-msgid "Check interval"
-msgstr "Intervallo di controllo"
-
-msgid "Daily"
-msgstr "Giornaliero"
-
-msgid "Weekly"
-msgstr "Settimanale"
-
-msgid "Monthly"
-msgstr "Mensile"
-
-msgid "Thumbnails"
-msgstr "Miniature"
-
-msgid "AppImage Thumbnailer"
-msgstr "Generatore miniature AppImage"
-
-msgid "Install appimage-thumbnailer to generate thumbnails for AppImages"
-msgstr "Installa appimage-thumbnailer per generare miniature per gli AppImage"
-
-msgid "Hide Nautilus thumbnail background"
-msgstr "Nascondi sfondo miniature Nautilus"
-
-msgid "Remove the alpha checkerboard behind thumbnails and icons"
-msgstr "Rimuovi la scacchiera alfa dietro miniature e icone"
-
-msgid "App removed"
-msgstr "App rimossa"
-
-msgid "The application was uninstalled successfully."
-msgstr "L'applicazione è stata disinstallata con successo."
-
-msgid "Close"
-msgstr "Chiudi"
-
+#: src/application.vala:399
 msgid "Uninstall failed"
 msgstr "Disinstallazione fallita"
 
+#: src/application.vala:400
 #, c-format
 msgid "%s could not be removed: %s"
 msgstr "%s non può essere rimosso: %s"
 
+#. Architecture mismatch banner
+#: src/application.vala:402 src/application.vala:457 src/application.vala:469
+#: src/windows/dialog_window.vala:95 src/windows/drop_window.vala:95
+#: src/windows/drop_window.vala:105
+msgid "Close"
+msgstr "Chiudi"
+
+#: src/application.vala:407
 msgid "Moved to Trash"
 msgstr "Spostato nel cestino"
 
+#: src/application.vala:415
 msgid "Extraction is only available for portable installations."
 msgstr "L'estrazione è disponibile solo per installazioni portatili."
 
+#: src/application.vala:451
 msgid "Extracted for faster launch"
 msgstr "Estratto per un avvio più veloce"
 
+#: src/application.vala:454
 msgid "Extraction complete"
 msgstr "Estrazione completata"
 
+#: src/application.vala:455
 #, c-format
 msgid "%s was extracted and will open faster."
 msgstr "%s è stato estratto e si aprirà più velocemente."
 
+#: src/application.vala:466
 msgid "Extraction failed"
 msgstr "Estrazione fallita"
 
+#: src/application.vala:467
 #, c-format
 msgid "%s could not be extracted: %s"
 msgstr "%s non può essere estratto: %s"
 
-msgid "AppImage Installer"
-msgstr "Installatore AppImage"
-
-msgid "Verify"
-msgstr "Verifica"
-
-msgid "Verify AppImage with SHA256 hash"
-msgstr "Verifica AppImage con hash SHA256"
-
-msgid "SHA256 hash does not match. Verification failed."
-msgstr "L'hash SHA256 non corrisponde. Verifica fallita."
-
-msgid "Drag and drop to install into Applications"
-msgstr "Trascina e rilascia per installare in Applicazioni"
-
-msgid "Applications"
-msgstr "Applicazioni"
-
-#, c-format
-msgid "Open %s?"
-msgstr "Aprire %s?"
-
-#, c-format
-msgid "Origins of %s application can not be verified. Are you sure you want to open it?"
-msgstr "L'origine dell'applicazione %s non può essere verificata. Sei sicuro di volerla aprire?"
-
-msgid "This is a terminal application and will be installed in portable mode."
-msgstr "Questa è un'applicazione terminale e verrà installata in modalità portatile."
-
-msgid "Install the AppImage to add it to your applications."
-msgstr "Installa l'AppImage per aggiungerlo alle tue applicazioni."
-
-msgid "Install"
-msgstr "Installa"
-
-msgid "This AppImage is incompatible or corrupted"
-msgstr "Questo AppImage è incompatibile o corrotto"
-
-msgid "Missing required files (AppRun, .desktop, or icon)"
-msgstr "File richiesti mancanti (AppRun, .desktop o icona)"
-
-msgid "Unknown version"
-msgstr "Versione sconosciuta"
-
-#, c-format
-msgid "Will update to version %s"
-msgstr "Verrà aggiornato alla versione %s"
-
-#, c-format
-msgid "Update %s?"
-msgstr "Aggiornare %s?"
-
-#, c-format
-msgid "Replace %s?"
-msgstr "Sostituire %s?"
-
-#, c-format
-msgid "A newer item named %s already exists in this location. Do you want to replace it with the older one you're copying?"
-msgstr "Un elemento più recente chiamato %s esiste già in questa posizione. Vuoi sostituirlo con quello più vecchio che stai copiando?"
-
-#, c-format
-msgid "Installed: %s | Incoming: %s"
-msgstr "Installato: %s | In arrivo: %s"
-
-#, c-format
-msgid "An item named %s already exists in this location. Do you want to replace it with one you're copying?"
-msgstr "Un elemento chiamato %s esiste già in questa posizione. Vuoi sostituirlo con quello che stai copiando?"
-
-msgid "Stop"
-msgstr "Ferma"
-
-msgid "Replace"
-msgstr "Sostituisci"
-
-msgid "Unable to prepare AppImage for installation"
-msgstr "Impossibile preparare l'AppImage per l'installazione"
-
-msgid "Successfully Installed"
-msgstr "Installato con successo"
-
-msgid "Successfully Updated"
-msgstr "Aggiornato con successo"
-
-msgid "Successfully Replaced"
-msgstr "Sostituito con successo"
-
-#, c-format
-msgid "Version %s"
-msgstr "Versione %s"
-
-msgid "Open"
-msgstr "Apri"
-
-msgid "Done"
-msgstr "Fatto"
-
-msgid "Installation failed"
-msgstr "Installazione fallita"
-
-msgid "Dismiss"
-msgstr "Ignora"
-
-msgid "Verify AppImage"
-msgstr "Verifica AppImage"
-
-msgid "Verify the authenticity of this AppImage."
-msgstr "Verifica l'autenticità di questo AppImage."
-
-msgid "Enter the SHA256 hash "
-msgstr "Inserisci l'hash SHA256 "
-
+#: src/core/background_update_service.vala:306
 msgid "App updates available"
 msgstr "Aggiornamenti app disponibili"
 
+#. Always show aggregate count
+#: src/core/background_update_service.vala:308
 #, c-format
 msgid "%d app update(s) available"
 msgstr "%d aggiornamento/i app disponibile/i"
 
+#. Build actions array: pairs of (action_key, label)
+#. "default" action is invoked when user clicks the notification body
+#: src/core/background_update_service.vala:317
 msgid "Open AppManager"
 msgstr "Apri AppManager"
 
+#: src/core/installer.vala:606 src/windows/details_window.vala:771
+msgid "Move to Trash"
+msgstr "Sposta nel cestino"
+
+#. Check if path is absolute
+#: src/core/path_migration_service.vala:42
+msgid "Path must be absolute"
+msgstr ""
+
+#. Check if it's the same as current
+#: src/core/path_migration_service.vala:47
+msgid "This is already the current directory"
+msgstr ""
+
+#: src/core/path_migration_service.vala:56
+msgid "Directory is not writable"
+msgstr ""
+
+#: src/core/path_migration_service.vala:59
+#, c-format
+msgid "Cannot access directory: %s"
+msgstr ""
+
+#. Check if it's a directory
+#: src/core/path_migration_service.vala:63
+msgid "Path exists but is not a directory"
+msgstr ""
+
+#: src/core/path_migration_service.vala:69
+msgid "Invalid path"
+msgstr ""
+
+#: src/core/path_migration_service.vala:72
+msgid "Parent directory does not exist"
+msgstr ""
+
+#: src/core/path_migration_service.vala:77
+msgid "Cannot create directory: parent is not writable"
+msgstr ""
+
+#: src/core/path_migration_service.vala:80
+#, c-format
+msgid "Cannot access parent directory: %s"
+msgstr ""
+
+#. Create new directory
+#. Exception path - clear flag since no signal will be emitted
+#: src/core/path_migration_service.vala:170
+#, c-format
+msgid "Failed to create directory: %s"
+msgstr ""
+
+#. Exception path - clear flag since no signal will be emitted
+#: src/core/path_migration_service.vala:178
+#, c-format
+msgid "Failed to create extracted directory: %s"
+msgstr ""
+
+#: src/core/path_migration_service.vala:189
+#, c-format
+msgid "Migrating %s (%d/%d)…"
+msgstr ""
+
+#: src/core/path_migration_service.vala:215
+#, c-format
+msgid ""
+"Some apps failed to migrate:\n"
+"%s"
+msgstr ""
+
+#: src/core/updater.vala:547 src/core/updater.vala:612
 msgid "No update address configured"
 msgstr "Nessun indirizzo di aggiornamento configurato"
 
+#: src/core/updater.vala:552 src/core/updater.vala:621
 msgid "Update source not supported"
 msgstr "Fonte di aggiornamento non supportata"
 
+#: src/core/updater.vala:568 src/core/updater.vala:639
 msgid "Unable to read releases"
 msgstr "Impossibile leggere le release"
 
+#: src/core/updater.vala:573 src/core/updater.vala:665
 #, c-format
 msgid "No matching AppImage found for %s"
 msgstr "Nessun AppImage corrispondente trovato per %s"
 
+#. Version comparison: if both have versions, compare them
+#. Remote version is same or older than current
+#: src/core/updater.vala:581 src/core/updater.vala:587
+#: src/core/updater.vala:649 src/core/updater.vala:657
+#: src/core/updater.vala:770 src/core/updater.vala:795
+#: src/core/updater.vala:1245 src/core/updater.vala:1273
+#: src/core/updater.vala:1315 src/core/updater.vala:1339
 msgid "Already up to date"
 msgstr "Già aggiornato"
+
+#: src/core/updater.vala:687 src/core/updater.vala:1381
+#: src/core/updater.vala:1446
+#, fuzzy, c-format
+msgid "Updated to %s"
+msgstr "Aggiornare %s?"
+
+#: src/core/updater.vala:758 src/core/updater.vala:788
+#: src/core/updater.vala:1260
+msgid "Server does not provide change tracking headers"
+msgstr ""
+
+#: src/core/updater.vala:766 src/core/updater.vala:1269
+#: src/core/updater.vala:1333
+msgid "Baseline recorded"
+msgstr ""
+
+#: src/core/updater.vala:815 src/core/updater.vala:1382
+#: src/core/updater.vala:1447
+#, fuzzy
+msgid "Updated"
+msgstr "Aggiorna"
+
+#: src/core/updater.vala:1223
+msgid "Unknown zsync source type"
+msgstr ""
+
+#: src/core/updater.vala:1290
+msgid "Unknown zsync source"
+msgstr ""
+
+#: src/core/updater.vala:1419
+msgid "Cannot determine download URL from zsync URL"
+msgstr ""
+
+#: src/windows/details_window.vala:100
+msgid "⚠️ '~/.local/bin' is not in $PATH. App will not launch from the terminal"
+msgstr "⚠️ '~/.local/bin' non è in $PATH. L'app non si avvierà dal terminale"
+
+#. App version
+#: src/windows/details_window.vala:135 src/windows/drop_window.vala:381
+msgid "Version unknown"
+msgstr "Versione sconosciuta"
+
+#: src/windows/details_window.vala:160
+msgid "Show in Files"
+msgstr "Mostra nei file"
+
+#: src/windows/details_window.vala:162
+msgid "Portable"
+msgstr "Portatile"
+
+#: src/windows/details_window.vala:162
+msgid "Extracted"
+msgstr "Estratto"
+
+#. Terminal app card (only show if is_terminal)
+#: src/windows/details_window.vala:184
+msgid "Terminal"
+msgstr "Terminale"
+
+#: src/windows/details_window.vala:192
+msgid "This app supports efficient delta updates"
+msgstr "Questa app supporta gli aggiornamenti delta efficienti"
+
+#: src/windows/details_window.vala:199
+msgid "Hidden"
+msgstr "Nascosto"
+
+#: src/windows/details_window.vala:209
+msgid "Properties"
+msgstr "Proprietà"
+
+#: src/windows/details_window.vala:214
+msgid "Command line arguments"
+msgstr "Argomenti riga di comando"
+
+#: src/windows/details_window.vala:246
+msgid "Update info"
+msgstr "Info aggiornamento"
+
+#: src/windows/details_window.vala:252
+msgid "How update links work"
+msgstr "Come funzionano i link di aggiornamento"
+
+#: src/windows/details_window.vala:271
+msgid "Update Link"
+msgstr "Link di aggiornamento"
+
+#: src/windows/details_window.vala:320
+msgid "Web Page"
+msgstr "Pagina web"
+
+#: src/windows/details_window.vala:349
+msgid "Open web page"
+msgstr "Apri pagina web"
+
+#: src/windows/details_window.vala:363
+msgid "Advanced"
+msgstr "Avanzate"
+
+#: src/windows/details_window.vala:390
+msgid "Environment Variables"
+msgstr "Variabili d'ambiente"
+
+#: src/windows/details_window.vala:391
+msgid "Set custom environment variables for this app"
+msgstr "Imposta variabili d'ambiente personalizzate per questa app"
+
+#: src/windows/details_window.vala:444
+msgid "NAME"
+msgstr "NOME"
+
+#: src/windows/details_window.vala:458
+msgid "value"
+msgstr "valore"
+
+#: src/windows/details_window.vala:470
+msgid "Remove variable"
+msgstr "Rimuovi variabile"
+
+#: src/windows/details_window.vala:595
+msgid "Keywords"
+msgstr "Parole chiave"
+
+#: src/windows/details_window.vala:605
+msgid "Icon name"
+msgstr "Nome icona"
+
+#: src/windows/details_window.vala:615
+msgid "Startup WM Class"
+msgstr "Classe WM di avvio"
+
+#: src/windows/details_window.vala:625
+msgid "Version"
+msgstr "Versione"
+
+#: src/windows/details_window.vala:637
+msgid "Hide from app drawer"
+msgstr "Nascondi dal cassetto app"
+
+#: src/windows/details_window.vala:638
+msgid "Don't show in application menu"
+msgstr "Non mostrare nel menu applicazioni"
+
+#: src/windows/details_window.vala:649
+msgid "Add to $PATH"
+msgstr "Aggiungi a $PATH"
+
+#: src/windows/details_window.vala:650
+msgid "Create a launcher in ~/.local/bin so you can run it from the terminal"
+msgstr "Crea un lanciatore in ~/.local/bin per eseguirlo dal terminale"
+
+#: src/windows/details_window.vala:711
+msgid "Actions"
+msgstr "Azioni"
+
+#. Extract button
+#: src/windows/details_window.vala:750
+msgid "Extract AppImage"
+msgstr "Estrai AppImage"
+
+#: src/windows/details_window.vala:787
+msgid "Restore default"
+msgstr "Ripristina predefinito"
+
+#: src/windows/details_window.vala:799 src/windows/main_window.vala:456
+msgid "Updating..."
+msgstr "Aggiornamento..."
+
+#: src/windows/details_window.vala:801
+msgid "Checking..."
+msgstr "Controllo..."
+
+#: src/windows/details_window.vala:819 src/windows/drop_window.vala:408
+msgid "Update"
+msgstr "Aggiorna"
+
+#: src/windows/details_window.vala:823
+msgid "Check Update"
+msgstr "Controlla aggiornamento"
+
+#: src/windows/details_window.vala:889
+msgid ""
+"Update info lets AppManager fetch new builds for you. Paste the download "
+"link and AppManager will do the rest."
+msgstr ""
+"Le info di aggiornamento permettono ad AppManager di recuperare le nuove "
+"versioni per te. Incolla il link di download e AppManager farà il resto."
+
+#: src/windows/details_window.vala:890
+msgid ""
+"Currently GitHub and GitLab URL formats are fully supported. Direct download "
+"links also work if the server provides Last-Modified or Content-Length "
+"headers."
+msgstr ""
+"Attualmente i formati URL di GitHub e GitLab sono completamente supportati. "
+"I link di download diretto funzionano anche se il server fornisce gli header "
+"Last-Modified o Content-Length."
+
+#: src/windows/details_window.vala:891
+msgid "Update links"
+msgstr "Link di aggiornamento"
+
+#: src/windows/details_window.vala:892
+msgid "Got it"
+msgstr "Capito"
+
+#: src/windows/details_window.vala:909
+msgid ""
+"Extracting will unpack the application so it opens faster, but it will "
+"consume more disk space. This action cannot be reversed automatically."
+msgstr ""
+"L'estrazione scompatterà l'applicazione per aprirla più velocemente, ma "
+"consumerà più spazio su disco. Questa azione non può essere annullata "
+"automaticamente."
+
+#: src/windows/details_window.vala:910
+msgid "Extract application?"
+msgstr "Estrarre l'applicazione?"
+
+#: src/windows/details_window.vala:911 src/windows/drop_window.vala:235
+#: src/windows/drop_window.vala:409 src/windows/drop_window.vala:965
+#: src/windows/preferences_window.vala:341
+#: src/windows/preferences_window.vala:375
+msgid "Cancel"
+msgstr "Annulla"
+
+#: src/windows/details_window.vala:912
+msgid "Extract"
+msgstr "Estrai"
+
+#: src/windows/dialog_window.vala:86
+msgid "App removed"
+msgstr "App rimossa"
+
+#: src/windows/dialog_window.vala:94
+msgid "The application was uninstalled successfully."
+msgstr "L'applicazione è stata disinstallata con successo."
+
+#: src/windows/drop_window.vala:52 src/windows/drop_window.vala:76
+msgid "AppImage Installer"
+msgstr "Installatore AppImage"
+
+#. Add Verify button to headerbar
+#: src/windows/drop_window.vala:87 src/windows/drop_window.vala:971
+msgid "Verify"
+msgstr "Verifica"
+
+#: src/windows/drop_window.vala:88
+msgid "Verify AppImage with SHA256 hash"
+msgstr "Verifica AppImage con hash SHA256"
+
+#. Verification failed banner
+#: src/windows/drop_window.vala:114
+msgid "SHA256 hash does not match. Verification failed."
+msgstr "L'hash SHA256 non corrisponde. Verifica fallita."
+
+#: src/windows/drop_window.vala:130
+msgid "Drag and drop to install into Applications"
+msgstr "Trascina e rilascia per installare in Applicazioni"
+
+#: src/windows/drop_window.vala:185
+msgid "Applications"
+msgstr "Applicazioni"
+
+#. Use app icon with warning badge overlay
+#: src/windows/drop_window.vala:221
+#, c-format
+msgid "Open %s?"
+msgstr "Aprire %s?"
+
+#: src/windows/drop_window.vala:224
+#, c-format
+msgid ""
+"Origins of %s application can not be verified. Are you sure you want to open "
+"it?"
+msgstr ""
+"L'origine dell'applicazione %s non può essere verificata. Sei sicuro di "
+"volerla aprire?"
+
+#: src/windows/drop_window.vala:229
+msgid "This is a terminal application and will be installed in portable mode."
+msgstr ""
+"Questa è un'applicazione terminale e verrà installata in modalità portatile."
+
+#: src/windows/drop_window.vala:231
+msgid "Install the AppImage to add it to your applications."
+msgstr "Installa l'AppImage per aggiungerlo alle tue applicazioni."
+
+#: src/windows/drop_window.vala:234
+msgid "Install"
+msgstr "Installa"
+
+#: src/windows/drop_window.vala:307
+msgid "This AppImage is incompatible or corrupted"
+msgstr "Questo AppImage è incompatibile o corrotto"
+
+#: src/windows/drop_window.vala:309
+msgid "Missing required files (AppRun, .desktop, or icon)"
+msgstr "File richiesti mancanti (AppRun, .desktop o icona)"
+
+#. Check architecture compatibility
+#: src/windows/drop_window.vala:317
+#, fuzzy
+msgid "unknown"
+msgstr "Versione sconosciuta"
+
+#: src/windows/drop_window.vala:318
+#, c-format
+msgid "This app is built for %s and cannot run here"
+msgstr ""
+
+#: src/windows/drop_window.vala:320
+msgid "Architecture mismatch"
+msgstr ""
+
+#: src/windows/drop_window.vala:388 src/windows/drop_window.vala:545
+msgid "Unknown version"
+msgstr "Versione sconosciuta"
+
+#: src/windows/drop_window.vala:389
+#, c-format
+msgid "Will update to version %s"
+msgstr "Verrà aggiornato alla versione %s"
+
+#. Use icon with verification badge overlay
+#: src/windows/drop_window.vala:405
+#, c-format
+msgid "Update %s?"
+msgstr "Aggiornare %s?"
+
+#. Use icon with verification badge overlay
+#: src/windows/drop_window.vala:435
+#, c-format
+msgid "Replace %s?"
+msgstr "Sostituire %s?"
+
+#: src/windows/drop_window.vala:439
+#, c-format
+msgid ""
+"A newer item named %s already exists in this location. Do you want to "
+"replace it with the older one you're copying?"
+msgstr ""
+"Un elemento più recente chiamato %s esiste già in questa posizione. Vuoi "
+"sostituirlo con quello più vecchio che stai copiando?"
+
+#: src/windows/drop_window.vala:441
+#, c-format
+msgid "Installed: %s | Incoming: %s"
+msgstr "Installato: %s | In arrivo: %s"
+
+#: src/windows/drop_window.vala:445
+#, c-format
+msgid ""
+"An item named %s already exists in this location. Do you want to replace it "
+"with one you're copying?"
+msgstr ""
+"Un elemento chiamato %s esiste già in questa posizione. Vuoi sostituirlo con "
+"quello che stai copiando?"
+
+#: src/windows/drop_window.vala:449
+msgid "Stop"
+msgstr "Ferma"
+
+#: src/windows/drop_window.vala:450
+msgid "Replace"
+msgstr "Sostituisci"
+
+#: src/windows/drop_window.vala:485
+msgid "Unable to prepare AppImage for installation"
+msgstr "Impossibile preparare l'AppImage per l'installazione"
+
+#: src/windows/drop_window.vala:526
+msgid "Successfully Installed"
+msgstr "Installato con successo"
+
+#: src/windows/drop_window.vala:528
+msgid "Successfully Updated"
+msgstr "Aggiornato con successo"
+
+#: src/windows/drop_window.vala:528
+msgid "Successfully Replaced"
+msgstr "Sostituito con successo"
+
+#: src/windows/drop_window.vala:546
+#, c-format
+msgid "Version %s"
+msgstr "Versione %s"
+
+#: src/windows/drop_window.vala:550
+msgid "Open"
+msgstr "Apri"
+
+#: src/windows/drop_window.vala:551
+msgid "Done"
+msgstr "Fatto"
+
+#: src/windows/drop_window.vala:577
+msgid "Installation failed"
+msgstr "Installazione fallita"
+
+#: src/windows/drop_window.vala:587
+msgid "Dismiss"
+msgstr "Ignora"
+
+#: src/windows/drop_window.vala:932
+msgid "Verify AppImage"
+msgstr "Verifica AppImage"
+
+#: src/windows/drop_window.vala:950
+msgid "Verify the authenticity of this AppImage."
+msgstr "Verifica l'autenticità di questo AppImage."
+
+#: src/windows/drop_window.vala:956
+msgid "Enter the SHA256 hash "
+msgstr "Inserisci l'hash SHA256 "
+
+#: src/windows/main_window.vala:48 src/windows/main_window.vala:138
+#: data/com.github.AppManager.metainfo.xml:4
+msgid "AppManager"
+msgstr "AppManager"
+
+#: src/windows/main_window.vala:122 src/windows/main_window.vala:239
+#: src/windows/main_window.vala:392
+msgid "My Apps"
+msgstr "Le mie app"
+
+#: src/windows/main_window.vala:175
+#, fuzzy
+msgid "Only AppImage files can be installed"
+msgstr "Nessuna app AppImage installata"
+
+#: src/windows/main_window.vala:196
+msgid "Get more ..."
+msgstr "Ottieni altro ..."
+
+#: src/windows/main_window.vala:208
+msgid "Find more AppImages"
+msgstr "Trova altri AppImage"
+
+#: src/windows/main_window.vala:209
+msgid "Browse these sources to discover and download AppImages"
+msgstr "Sfoglia queste fonti per scoprire e scaricare AppImage"
+
+#: src/windows/main_window.vala:260 src/windows/main_window.vala:319
+msgid "No AppImage apps installed"
+msgstr "Nessuna app AppImage installata"
+
+#: src/windows/main_window.vala:265
+msgid "Download AppImage and double click to install with AppManager"
+msgstr "Scarica un AppImage e fai doppio clic per installarlo con AppManager"
+
+#: src/windows/main_window.vala:319
+msgid "No results found"
+msgstr "Nessun risultato trovato"
+
+#: src/windows/main_window.vala:463
+msgid "Update available"
+msgstr "Aggiornamento disponibile"
+
+#: src/windows/main_window.vala:489
+msgid "extracted"
+msgstr "estratto"
+
+#: src/windows/main_window.vala:546
+msgid "Updated just now"
+msgstr "Aggiornato proprio ora"
+
+#: src/windows/main_window.vala:546
+msgid "Installed just now"
+msgstr "Installato proprio ora"
+
+#: src/windows/main_window.vala:554
+#, c-format
+msgid "Updated %d min ago"
+msgstr "Aggiornato %d min fa"
+
+#: src/windows/main_window.vala:554
+#, c-format
+msgid "Installed %d min ago"
+msgstr "Installato %d min fa"
+
+#: src/windows/main_window.vala:562
+#, c-format
+msgid "Updated %d hours ago"
+msgstr "Aggiornato %d ore fa"
+
+#: src/windows/main_window.vala:562
+#, c-format
+msgid "Installed %d hours ago"
+msgstr "Installato %d ore fa"
+
+#: src/windows/main_window.vala:569
+#, c-format
+msgid "Updated %d days ago"
+msgstr "Aggiornato %d giorni fa"
+
+#: src/windows/main_window.vala:569
+#, c-format
+msgid "Installed %d days ago"
+msgstr "Installato %d giorni fa"
+
+#: src/windows/main_window.vala:585 src/windows/preferences_window.vala:34
+msgid "Preferences"
+msgstr "Preferenze"
+
+#: src/windows/main_window.vala:586
+msgid "Keyboard shortcuts"
+msgstr "Scorciatoie da tastiera"
+
+#: src/windows/main_window.vala:587 src/windows/main_window.vala:1327
+msgid "About AppManager"
+msgstr "Informazioni su AppManager"
+
+#: src/windows/main_window.vala:588
+msgid "Quit"
+msgstr "Esci"
+
+#: src/windows/main_window.vala:600
+#, fuzzy
+msgid "Support AppManager"
+msgstr "Esci da AppManager"
+
+#: src/windows/main_window.vala:615
+msgid "Buy Me a Coffee"
+msgstr ""
+
+#: src/windows/main_window.vala:634
+msgid "Become a sponsor on GitHub"
+msgstr ""
+
+#: src/windows/main_window.vala:639
+msgid "Sponsor Me ♡"
+msgstr ""
+
+#: src/windows/main_window.vala:650
+#, fuzzy
+msgid "Star AppManager on GitHub"
+msgstr "Esci da AppManager"
+
+#: src/windows/main_window.vala:655
+#, fuzzy
+msgid "Star AppManager"
+msgstr "Esci da AppManager"
+
+#: src/windows/main_window.vala:666
+msgid "View contributors on GitHub"
+msgstr ""
+
+#: src/windows/main_window.vala:671
+msgid "Contributors"
+msgstr ""
+
+#: src/windows/main_window.vala:694 src/windows/main_window.vala:1325
+msgid "Search"
+msgstr "Cerca"
+
+#: src/windows/main_window.vala:700
+msgid "Support this project"
+msgstr ""
+
+#: src/windows/main_window.vala:710
+msgid "More actions"
+msgstr "Altre azioni"
+
+#: src/windows/main_window.vala:725
+msgid "Search apps..."
+msgstr "Cerca app..."
+
+#. FUSE is not installed warning banner
+#: src/windows/main_window.vala:733
+msgid "FUSE is not installed. Some AppImages may fail to run"
+msgstr "FUSE non è installato. Alcuni AppImage potrebbero non funzionare"
+
+#: src/windows/main_window.vala:735
+msgid "Learn More"
+msgstr "Scopri di più"
+
+#: src/windows/main_window.vala:811 src/windows/main_window.vala:882
+msgid "Updates already running"
+msgstr "Gli aggiornamenti sono già in esecuzione"
+
+#: src/windows/main_window.vala:859
+msgid "Cancel update"
+msgstr "Annulla aggiornamento"
+
+#: src/windows/main_window.vala:890
+msgid "Cancelling..."
+msgstr "Annullamento..."
+
+#: src/windows/main_window.vala:916
+msgid "Update check cancelled"
+msgstr "Controllo aggiornamenti annullato"
+
+#: src/windows/main_window.vala:946
+#, c-format
+msgid "%d app(s) have updates"
+msgstr "%d app hanno aggiornamenti"
+
+#: src/windows/main_window.vala:949
+msgid "No updates available right now"
+msgstr "Nessun aggiornamento disponibile al momento"
+
+#: src/windows/main_window.vala:956
+msgid "Nothing queued for updating"
+msgstr "Nulla in coda per l'aggiornamento"
+
+#: src/windows/main_window.vala:983
+msgid "Update cancelled"
+msgstr "Aggiornamento annullato"
+
+#: src/windows/main_window.vala:1120
+msgid "Checking updates"
+msgstr "Controllo aggiornamenti"
+
+#: src/windows/main_window.vala:1123
+msgid "Update Apps"
+msgstr "Aggiorna app"
+
+#: src/windows/main_window.vala:1126
+msgid "Updating apps"
+msgstr "Aggiornamento app"
+
+#: src/windows/main_window.vala:1129
+msgid "Check updates"
+msgstr "Controlla aggiornamenti"
+
+#: src/windows/main_window.vala:1153
+msgid "No installed apps to update"
+msgstr "Nessuna app installata da aggiornare"
+
+#: src/windows/main_window.vala:1193
+#, c-format
+msgid "Updated %d app(s)"
+msgstr "%d app aggiornata/e"
+
+#: src/windows/main_window.vala:1196
+#, c-format
+msgid "%d update(s) failed"
+msgstr "%d aggiornamento/i fallito/i"
+
+#: src/windows/main_window.vala:1204
+msgid "Add update addresses in Details to enable updates"
+msgstr ""
+"Aggiungi indirizzi di aggiornamento nei Dettagli per abilitare gli "
+"aggiornamenti"
+
+#: src/windows/main_window.vala:1206
+msgid "All supported apps are already up to date"
+msgstr "Tutte le app supportate sono già aggiornate"
+
+#: src/windows/main_window.vala:1210
+#, c-format
+msgid "%d app(s) use unsupported update links"
+msgstr "%d app usano link di aggiornamento non supportati"
+
+#: src/windows/main_window.vala:1273
+#, c-format
+msgid "Update available for %s"
+msgstr "Aggiornamento disponibile per %s"
+
+#: src/windows/main_window.vala:1313
+msgid "General"
+msgstr "Generale"
+
+#: src/windows/main_window.vala:1317
+msgid "Navigation"
+msgstr "Navigazione"
+
+#: src/windows/main_window.vala:1321
+msgid "Window"
+msgstr "Finestra"
+
+#: src/windows/main_window.vala:1323
+msgid "Check for updates"
+msgstr "Controlla aggiornamenti"
+
+#: src/windows/main_window.vala:1324
+msgid "Show main menu"
+msgstr "Mostra menu principale"
+
+#: src/windows/main_window.vala:1326
+msgid "Show shortcuts"
+msgstr "Mostra scorciatoie"
+
+#: src/windows/main_window.vala:1328
+msgid "Close window"
+msgstr "Chiudi finestra"
+
+#: src/windows/main_window.vala:1329
+msgid "Quit AppManager"
+msgstr "Esci da AppManager"
+
+#: src/windows/main_window.vala:1346
+msgid "Credits"
+msgstr "Crediti"
+
+#. Installation directory group
+#: src/windows/preferences_window.vala:59
+#, fuzzy
+msgid "Installation"
+msgstr "Installazione fallita"
+
+#: src/windows/preferences_window.vala:60
+msgid "Configure where AppImages are installed (default: ~/Applications)"
+msgstr ""
+
+#: src/windows/preferences_window.vala:63
+#, fuzzy
+msgid "Installation directory"
+msgstr "Installazione fallita"
+
+#: src/windows/preferences_window.vala:78
+msgid "Browse for folder"
+msgstr ""
+
+#: src/windows/preferences_window.vala:86
+#, fuzzy
+msgid "Reset to default"
+msgstr "Ripristina predefinito"
+
+#: src/windows/preferences_window.vala:96
+#, fuzzy
+msgid "Apply changes"
+msgstr "Applicazioni"
+
+#. Automatic updates group
+#: src/windows/preferences_window.vala:111
+msgid "Automatic updates"
+msgstr "Aggiornamenti automatici"
+
+#: src/windows/preferences_window.vala:112
+msgid "Configure automatic update checking"
+msgstr "Configura il controllo automatico degli aggiornamenti"
+
+#: src/windows/preferences_window.vala:118
+msgid "Open update log"
+msgstr "Apri registro aggiornamenti"
+
+#. Background update check expander row
+#: src/windows/preferences_window.vala:132
+msgid "Background update check"
+msgstr "Controllo aggiornamenti in background"
+
+#: src/windows/preferences_window.vala:133
+msgid "Will notify when new app updates are available"
+msgstr "Notificherà quando saranno disponibili nuovi aggiornamenti"
+
+#. Auto update apps toggle (inside expander)
+#: src/windows/preferences_window.vala:144
+msgid "Auto update apps"
+msgstr "Aggiorna app automaticamente"
+
+#: src/windows/preferences_window.vala:145
+msgid "Will update apps automatically in background"
+msgstr "Aggiornerà le app automaticamente in background"
+
+#. Check interval (inside expander)
+#: src/windows/preferences_window.vala:151
+msgid "Check interval"
+msgstr "Intervallo di controllo"
+
+#: src/windows/preferences_window.vala:153
+msgid "Daily"
+msgstr "Giornaliero"
+
+#: src/windows/preferences_window.vala:154
+msgid "Weekly"
+msgstr "Settimanale"
+
+#: src/windows/preferences_window.vala:155
+msgid "Monthly"
+msgstr "Mensile"
+
+#. Thumbnails group
+#: src/windows/preferences_window.vala:180
+msgid "Thumbnails"
+msgstr "Miniature"
+
+#: src/windows/preferences_window.vala:183
+msgid "AppImage Thumbnailer"
+msgstr "Generatore miniature AppImage"
+
+#: src/windows/preferences_window.vala:184
+msgid "Install appimage-thumbnailer to generate thumbnails for AppImages"
+msgstr "Installa appimage-thumbnailer per generare miniature per gli AppImage"
+
+#: src/windows/preferences_window.vala:193
+msgid "Hide Nautilus thumbnail background"
+msgstr "Nascondi sfondo miniature Nautilus"
+
+#: src/windows/preferences_window.vala:194
+msgid "Remove the alpha checkerboard behind thumbnails and icons"
+msgstr "Rimuovi la scacchiera alfa dietro miniature e icone"
+
+#: src/windows/preferences_window.vala:251
+#, fuzzy
+msgid "Select Installation Directory"
+msgstr "Installazione fallita"
+
+#: src/windows/preferences_window.vala:318
+msgid "Invalid Path"
+msgstr ""
+
+#: src/windows/preferences_window.vala:328
+#, fuzzy
+msgid "Installation directory updated"
+msgstr "Installazione fallita"
+
+#: src/windows/preferences_window.vala:338
+msgid "Move Installed Apps?"
+msgstr ""
+
+#: src/windows/preferences_window.vala:339
+#, c-format
+msgid ""
+"This will move %d installed app(s) to the new location. This may take a "
+"while depending on the size of your apps."
+msgstr ""
+
+#: src/windows/preferences_window.vala:342
+#, fuzzy
+msgid "Move Apps"
+msgstr "Le mie app"
+
+#. Kill background daemon if running - it may interfere with migration
+#. by monitoring folders and triggering reconciliation
+#. Create progress dialog
+#: src/windows/preferences_window.vala:374
+msgid "Moving Apps…"
+msgstr ""
+
+#: src/windows/preferences_window.vala:374
+msgid "Please wait while your apps are being moved."
+msgstr ""
+
+#: src/windows/preferences_window.vala:411
+msgid "Apps moved successfully"
+msgstr ""
+
+#: src/windows/preferences_window.vala:413
+#, fuzzy
+msgid "Migration Failed"
+msgstr "Estrazione fallita"
+
+#: src/windows/preferences_window.vala:413
+msgid "Unknown error occurred"
+msgstr ""
+
+#: src/windows/preferences_window.vala:431
+msgid "OK"
+msgstr ""
+
+#: data/com.github.AppManager.metainfo.xml:6
+#: data/com.github.AppManager.metainfo.xml:8
+msgid "Arnis Kemlers"
+msgstr ""
+
+#: data/com.github.AppManager.metainfo.xml:9
+msgid "Drag-and-drop AppImage installer for GNOME"
+msgstr ""
+
+#: data/com.github.AppManager.metainfo.xml:35
+msgid ""
+"AppManager lets you install or uninstall AppImages with a familiar drag-and-"
+"drop workflow inspired by macOS. It handles desktop integration, icon "
+"extraction, executable bits, and Nautilus context menus."
+msgstr ""
+
+#: data/com.github.AppManager.metainfo.xml:47
+msgid ""
+"Initial preview with drag-and-drop installs, dual install modes, Nautilus "
+"menus, and preferences UI."
+msgstr ""
+
+#: data/com.github.AppManager.metainfo.xml:48
+msgid ""
+"Added optional background update checks powered by the XDG Background "
+"portal. Users grant permission on first launch, can pick an interval, and "
+"receive a notification when updates are detected."
+msgstr ""
+
+#~ msgid "Update link is managed by zsync and cannot be edited"
+#~ msgstr ""
+#~ "Il link di aggiornamento è gestito da zsync e non può essere modificato"
