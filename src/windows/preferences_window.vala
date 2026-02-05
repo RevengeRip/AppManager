@@ -344,16 +344,20 @@ namespace AppManager {
             dialog.default_response = "cancel";
             dialog.close_response = "cancel";
 
+            // Capture current effective path NOW before any settings changes
+            var old_effective = AppPaths.applications_dir;
+            var new_effective = new_setting != "" ? new_setting : AppPaths.default_applications_dir;
+            
             dialog.response.connect((response) => {
                 if (response == "move") {
-                    start_migration(new_setting);
+                    start_migration(old_effective, new_effective, new_setting);
                 }
             });
 
             dialog.present(this.get_root() as Gtk.Window);
         }
 
-        private void start_migration(string new_setting) {
+        private void start_migration(string old_path, string new_path, string new_setting) {
             var migration_service = new PathMigrationService(registry, settings);
             
             // STOP directory monitoring completely during migration
@@ -361,6 +365,10 @@ namespace AppManager {
             if (directory_monitor != null) {
                 directory_monitor.stop();
             }
+            
+            // Kill background daemon if running - it may interfere with migration
+            // by monitoring folders and triggering reconciliation
+            bool daemon_was_running = BackgroundUpdateService.kill_daemon_and_wait();
             
             // Create progress dialog
             var progress_dialog = new Adw.AlertDialog(_("Moving Apps…"), _("Please wait while your apps are being moved."));
@@ -389,6 +397,11 @@ namespace AppManager {
                     directory_monitor.start();
                 }
                 
+                // Respawn background daemon if it was running before migration
+                if (daemon_was_running) {
+                    BackgroundUpdateService.spawn_daemon();
+                }
+                
                 progress_dialog.force_close();
                 
                 if (success) {
@@ -401,9 +414,8 @@ namespace AppManager {
 
             progress_dialog.present(this.get_root() as Gtk.Window);
 
-            // Use the new_setting value to get target path
-            var target_path = new_setting != "" ? new_setting : "";
-            migration_service.migrate.begin(target_path);
+            // Pass explicit old and new paths to avoid GSettings caching issues
+            migration_service.migrate.begin(old_path, new_path, new_setting);
         }
 
         private void update_reset_button_visibility(string new_setting) {

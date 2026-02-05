@@ -137,19 +137,15 @@ namespace AppManager.Core {
         /**
          * Migrates all installations from the current directory to a new directory.
          * This is an async operation that reports progress.
+         * 
+         * @param old_base The current applications directory (source)
+         * @param new_base The target applications directory (destination)  
+         * @param new_setting The value to store in GSettings (empty string for default)
          */
-        public async void migrate(string new_path) throws MigrationError {
+        public async void migrate(string old_base, string new_base, string new_setting) throws MigrationError {
             // CRITICAL: Set migration flag BEFORE any file operations to prevent
             // reconcile_with_filesystem from detecting moved files as deleted
             registry.set_migration_in_progress(true);
-            
-            var old_base = AppPaths.applications_dir;
-            var new_base = new_path.strip();
-            
-            // Use default if empty
-            if (new_base == "") {
-                new_base = AppPaths.default_applications_dir;
-            }
 
             if (old_base == new_base) {
                 // Same path, nothing to do - clear flag since we won't emit signal
@@ -160,7 +156,7 @@ namespace AppManager.Core {
             var records = registry.list();
             if (records.length == 0) {
                 // No apps installed, just update the setting
-                settings.set_string("applications-dir", new_path.strip());
+                settings.set_string("applications-dir", new_setting);
                 // DO NOT clear migration flag here - PreferencesDialog will clear it
                 // after receiving migration_complete and restarting monitors
                 migration_complete(true, null);
@@ -205,7 +201,7 @@ namespace AppManager.Core {
             }
 
             // Update the setting AFTER migration is complete
-            settings.set_string("applications-dir", new_path.strip());
+            settings.set_string("applications-dir", new_setting);
 
             // Save registry with updated paths
             registry.persist(false);  // Don't notify - we'll do that after migration flag is cleared
@@ -358,14 +354,6 @@ namespace AppManager.Core {
             } catch (Error e) {
                 warning("Failed to update symlink %s: %s", symlink_path, e.message);
             }
-        }
-
-        /**
-         * Resets to the default installation directory.
-         * This is equivalent to migrating to ~/Applications.
-         */
-        public async void reset_to_default() throws MigrationError {
-            yield migrate("");
         }
 
         /**

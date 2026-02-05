@@ -121,9 +121,35 @@ X-XDP-Autostart=com.github.AppManager
         }
 
         /**
-         * Checks if the background daemon is already running.
+         * Kills any running background daemon and waits for it to fully terminate.
+         * Returns true if daemon was running and was killed, false if it wasn't running.
+         * This should be called before migration to ensure no background monitoring.
          */
-        private static bool is_daemon_running() {
+        public static bool kill_daemon_and_wait() {
+            if (!is_daemon_running()) {
+                return false;
+            }
+            
+            kill_daemon();
+            
+            // Wait for daemon to fully terminate (up to 5 seconds)
+            for (int i = 0; i < 50; i++) {
+                if (!is_daemon_running()) {
+                    debug("Background daemon terminated after %d ms", i * 100);
+                    return true;
+                }
+                Thread.usleep(100000); // 100ms
+            }
+            
+            warning("Background daemon did not terminate within 5 seconds");
+            return true;
+        }
+
+        /**
+         * Checks if the background daemon is already running.
+         * Public so PreferencesDialog can check before migration.
+         */
+        public static bool is_daemon_running() {
             try {
                 // Match just "--background-update" to avoid issues with path variations
                 // Use "--" to indicate end of options since pattern starts with "-"
