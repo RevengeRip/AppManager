@@ -978,38 +978,87 @@ namespace AppManager.Core {
         }
 
         /**
-         * Installs AppManager's symbolic icon from GResource to the hicolor theme.
+         * Installs AppManager's icons (main and symbolic) from GResource to the hicolor theme.
          * Called on startup and when installing AppManager itself.
          */
         public static void install_symbolic_icon() {
-            var dest = AppPaths.symbolic_icon_path;
-            if (GLib.FileUtils.test(dest, FileTest.EXISTS)) return;
-            try {
-                var bytes = resources_lookup_data(
-                    "/com/github/AppManager/icons/hicolor/symbolic/apps/com.github.AppManager-symbolic.svg",
-                    ResourceLookupFlags.NONE);
-                DirUtils.create_with_parents(Path.get_dirname(dest), 0755);
-                GLib.FileUtils.set_data(dest, bytes.get_data());
-                Process.spawn_command_line_async("gtk4-update-icon-cache -f -t " +
-                    Path.build_filename(Environment.get_user_data_dir(), "icons", "hicolor"));
-            } catch (Error e) {
-                debug("Symbolic icon install: %s", e.message);
+            bool needs_cache_update = false;
+
+            // Install main icon
+            var main_dest = AppPaths.main_icon_path;
+            if (!GLib.FileUtils.test(main_dest, FileTest.EXISTS)) {
+                try {
+                    var bytes = resources_lookup_data(
+                        "/com/github/AppManager/icons/hicolor/scalable/apps/com.github.AppManager.svg",
+                        ResourceLookupFlags.NONE);
+                    DirUtils.create_with_parents(Path.get_dirname(main_dest), 0755);
+                    GLib.FileUtils.set_data(main_dest, bytes.get_data());
+                    needs_cache_update = true;
+                } catch (Error e) {
+                    debug("Main icon install: %s", e.message);
+                }
+            }
+
+            // Install symbolic icon
+            var symbolic_dest = AppPaths.symbolic_icon_path;
+            if (!GLib.FileUtils.test(symbolic_dest, FileTest.EXISTS)) {
+                try {
+                    var bytes = resources_lookup_data(
+                        "/com/github/AppManager/icons/hicolor/symbolic/apps/com.github.AppManager-symbolic.svg",
+                        ResourceLookupFlags.NONE);
+                    DirUtils.create_with_parents(Path.get_dirname(symbolic_dest), 0755);
+                    GLib.FileUtils.set_data(symbolic_dest, bytes.get_data());
+                    needs_cache_update = true;
+                } catch (Error e) {
+                    debug("Symbolic icon install: %s", e.message);
+                }
+            }
+
+            if (needs_cache_update) {
+                try {
+                    Process.spawn_command_line_async("gtk4-update-icon-cache -f -t " +
+                        Path.build_filename(Environment.get_user_data_dir(), "icons", "hicolor"));
+                } catch (Error e) {
+                    debug("Icon cache update: %s", e.message);
+                }
             }
         }
 
         /**
-         * Removes AppManager's symbolic icon from the hicolor theme.
+         * Removes AppManager's icons (main and symbolic) from the hicolor theme.
          * Called when uninstalling AppManager itself.
          */
         public static void uninstall_symbolic_icon() {
-            var path = AppPaths.symbolic_icon_path;
-            if (GLib.FileUtils.test(path, FileTest.EXISTS)) {
+            bool needs_cache_update = false;
+
+            // Remove main icon
+            var main_path = AppPaths.main_icon_path;
+            if (GLib.FileUtils.test(main_path, FileTest.EXISTS)) {
                 try {
-                    File.new_for_path(path).delete(null);
+                    File.new_for_path(main_path).delete(null);
+                    needs_cache_update = true;
+                } catch (Error e) {
+                    debug("Main icon uninstall: %s", e.message);
+                }
+            }
+
+            // Remove symbolic icon
+            var symbolic_path = AppPaths.symbolic_icon_path;
+            if (GLib.FileUtils.test(symbolic_path, FileTest.EXISTS)) {
+                try {
+                    File.new_for_path(symbolic_path).delete(null);
+                    needs_cache_update = true;
+                } catch (Error e) {
+                    debug("Symbolic icon uninstall: %s", e.message);
+                }
+            }
+
+            if (needs_cache_update) {
+                try {
                     Process.spawn_command_line_async("gtk4-update-icon-cache -f -t " +
                         Path.build_filename(Environment.get_user_data_dir(), "icons", "hicolor"));
                 } catch (Error e) {
-                    debug("Symbolic icon uninstall: %s", e.message);
+                    debug("Icon cache update: %s", e.message);
                 }
             }
         }

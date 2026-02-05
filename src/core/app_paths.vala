@@ -112,6 +112,16 @@ namespace AppManager.Core {
         }
 
         /**
+         * Path to AppManager's main icon in the hicolor theme.
+         */
+        public static string main_icon_path {
+            owned get {
+                return Path.build_filename(Environment.get_user_data_dir(),
+                    "icons", "hicolor", "scalable", "apps", "com.github.AppManager.svg");
+            }
+        }
+
+        /**
          * Path to AppManager's symbolic icon in the hicolor theme.
          */
         public static string symbolic_icon_path {

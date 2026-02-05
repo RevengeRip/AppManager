@@ -1,7 +1,7 @@
 #!/bin/bash
-# Mass install all apps from ~/Applications2
+# Mass install all apps from ~/Temp
 
-APPS_DIR="$HOME/Applications2"
+APPS_DIR="$HOME/Temp"
 
 if [ ! -d "$APPS_DIR" ]; then
     echo "Error: Directory $APPS_DIR does not exist"
