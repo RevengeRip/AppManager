@@ -85,68 +85,70 @@ msgstr "Mover a la papelera"
 #. Check if path is absolute
 #: src/core/path_migration_service.vala:42
 msgid "Path must be absolute"
-msgstr ""
+msgstr "La ruta debe ser absoluta"
 
 #. Check if it's the same as current
 #: src/core/path_migration_service.vala:47
 msgid "This is already the current directory"
-msgstr ""
+msgstr "Este ya es el directorio actual"
 
 #: src/core/path_migration_service.vala:56
 msgid "Directory is not writable"
-msgstr ""
+msgstr "El directorio no puede ser escrito"
 
 #: src/core/path_migration_service.vala:59
 #, c-format
 msgid "Cannot access directory: %s"
-msgstr ""
+msgstr "No se puede acceder al directorio: %s"
 
 #. Check if it's a directory
 #: src/core/path_migration_service.vala:63
 msgid "Path exists but is not a directory"
-msgstr ""
+msgstr "La ruta existe pero no es un directorio"
 
 #: src/core/path_migration_service.vala:69
 msgid "Invalid path"
-msgstr ""
+msgstr "Ruta no válida"
 
 #: src/core/path_migration_service.vala:72
 msgid "Parent directory does not exist"
-msgstr ""
+msgstr "El directorio padre no existe"
 
 #: src/core/path_migration_service.vala:77
 msgid "Cannot create directory: parent is not writable"
-msgstr ""
+msgstr "No se puede crear el directorio: el directorio padre no puede ser escrito"
 
 #: src/core/path_migration_service.vala:80
 #, c-format
 msgid "Cannot access parent directory: %s"
-msgstr ""
+msgstr "No se puede acceder al directorio padre: %s"
 
 #. Create new directory
 #. Exception path - clear flag since no signal will be emitted
 #: src/core/path_migration_service.vala:170
 #, c-format
 msgid "Failed to create directory: %s"
-msgstr ""
+msgstr "Error al crear el directorio: %s"
 
 #. Exception path - clear flag since no signal will be emitted
 #: src/core/path_migration_service.vala:178
 #, c-format
 msgid "Failed to create extracted directory: %s"
-msgstr ""
+msgstr "Error al crear el directorio extraido: %s"
 
 #: src/core/path_migration_service.vala:189
 #, c-format
 msgid "Migrating %s (%d/%d)…"
-msgstr ""
+msgstr "Migrando %s (%d/%d)…"
 
 #: src/core/path_migration_service.vala:215
 #, c-format
 msgid ""
 "Some apps failed to migrate:\n"
 "%s"
-msgstr ""
+msgstr "" 
+"Algunas apps han sufrido un error en la migración"
+"%s"
 
 #: src/core/updater.vala:547 src/core/updater.vala:612
 msgid "No update address configured"
@@ -184,7 +186,7 @@ msgstr "¿Actualizar %s?"
 #: src/core/updater.vala:758 src/core/updater.vala:788
 #: src/core/updater.vala:1260
 msgid "Server does not provide change tracking headers"
-msgstr ""
+msgstr "El servidor no proporciona cabeceras de rastreo de cambios"
 
 #: src/core/updater.vala:766 src/core/updater.vala:1269
 #: src/core/updater.vala:1333
@@ -199,15 +201,15 @@ msgstr "Actualizar"
 
 #: src/core/updater.vala:1223
 msgid "Unknown zsync source type"
-msgstr ""
+msgstr "Tipo de fuente zsync desconocida"
 
 #: src/core/updater.vala:1290
 msgid "Unknown zsync source"
-msgstr ""
+msgstr "Funete zsync desconocida"
 
 #: src/core/updater.vala:1419
 msgid "Cannot determine download URL from zsync URL"
-msgstr ""
+msgstr "No se puede determinar la URL de descarga a partir de la URL zsync"
 
 #: src/windows/details_window.vala:100
 msgid "⚠️ '~/.local/bin' is not in $PATH. App will not launch from the terminal"
@@ -701,15 +703,15 @@ msgstr "Salir de AppManager"
 
 #: src/windows/main_window.vala:615
 msgid "Buy Me a Coffee"
-msgstr ""
+msgstr "Comprame un café"
 
 #: src/windows/main_window.vala:634
 msgid "Become a sponsor on GitHub"
-msgstr ""
+msgstr "Conviertete en patrocinador en Github"
 
 #: src/windows/main_window.vala:639
 msgid "Sponsor Me ♡"
-msgstr ""
+msgstr "Patrocíname"
 
 #: src/windows/main_window.vala:650
 #, fuzzy
@@ -723,11 +725,11 @@ msgstr "Salir de AppManager"
 
 #: src/windows/main_window.vala:666
 msgid "View contributors on GitHub"
-msgstr ""
+msgstr "Ver los contribuidores en Github"
 
 #: src/windows/main_window.vala:671
 msgid "Contributors"
-msgstr ""
+msgstr "Contribuidores"
 
 #: src/windows/main_window.vala:694 src/windows/main_window.vala:1325
 msgid "Search"
@@ -735,7 +737,7 @@ msgstr "Buscar"
 
 #: src/windows/main_window.vala:700
 msgid "Support this project"
-msgstr ""
+msgstr "Apoya este proyecto"
 
 #: src/windows/main_window.vala:710
 msgid "More actions"
@@ -979,7 +981,7 @@ msgstr "Error en la instalación"
 
 #: src/windows/preferences_window.vala:318
 msgid "Invalid Path"
-msgstr ""
+msgstr "Ruta no válida"
 
 #: src/windows/preferences_window.vala:328
 #, fuzzy
@@ -988,7 +990,7 @@ msgstr "Error en la instalación"
 
 #: src/windows/preferences_window.vala:338
 msgid "Move Installed Apps?"
-msgstr ""
+msgstr "¿Mover las Apps instaladas?"
 
 #: src/windows/preferences_window.vala:339
 #, c-format
@@ -996,6 +998,8 @@ msgid ""
 "This will move %d installed app(s) to the new location. This may take a "
 "while depending on the size of your apps."
 msgstr ""
+"Esto moverá %d app(s) instaladas a la nueva ubicación. Esto puede tomar "
+"un rato dependiendo del tamaño de tus apps."
 
 #: src/windows/preferences_window.vala:342
 #, fuzzy
@@ -1007,15 +1011,15 @@ msgstr "Mis aplicaciones"
 #. Create progress dialog
 #: src/windows/preferences_window.vala:374
 msgid "Moving Apps…"
-msgstr ""
+msgstr "Moviendo Apps…"
 
 #: src/windows/preferences_window.vala:374
 msgid "Please wait while your apps are being moved."
-msgstr ""
+msgstr "Por favor espera mientras tus apps se mueven."
 
 #: src/windows/preferences_window.vala:411
 msgid "Apps moved successfully"
-msgstr ""
+msgstr "Apps movidas con éxito"
 
 #: src/windows/preferences_window.vala:413
 #, fuzzy
@@ -1024,11 +1028,11 @@ msgstr "Error en la extracción"
 
 #: src/windows/preferences_window.vala:413
 msgid "Unknown error occurred"
-msgstr ""
+msgstr "Ha occurido un error desconocido"
 
 #: src/windows/preferences_window.vala:431
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: data/com.github.AppManager.metainfo.xml:6
 #: data/com.github.AppManager.metainfo.xml:8
@@ -1037,7 +1041,7 @@ msgstr ""
 
 #: data/com.github.AppManager.metainfo.xml:9
 msgid "Drag-and-drop AppImage installer for GNOME"
-msgstr ""
+msgstr "Instalador de AppImage de arrastrar y soltar para GNOME"
 
 #: data/com.github.AppManager.metainfo.xml:35
 msgid ""
@@ -1045,6 +1049,9 @@ msgid ""
 "drop workflow inspired by macOS. It handles desktop integration, icon "
 "extraction, executable bits, and Nautilus context menus."
 msgstr ""
+"AppManager te permite instaladar o desinstalar AppImages con un flujo de trabajo"
+"familiar de arrastrar y soltar inspirado en macOS. Maneja la integración "
+"con desktop, iconos, extracción, ejecutables y menus de contexto de Nautilus" 
 
 #: data/com.github.AppManager.metainfo.xml:47
 msgid ""
