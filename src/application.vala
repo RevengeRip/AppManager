@@ -460,6 +460,11 @@ Examples:
                 return;
             }
 
+            // Hold the application alive while the install runs in a background thread.
+            // Without this, the dialog closing (from DialogWindow.add_option) may leave
+            // zero windows, causing GtkApplication to quit before the thread finishes.
+            // For reinstalls this is catastrophic: uninstall completes but install never does.
+            this.hold();
             quick_install_run_async.begin(appimage_path, staged_path, staged_dir, mode, existing);
         }
 
@@ -505,6 +510,9 @@ Examples:
             } else if (record != null) {
                 quick_install_show_success(record, upgraded);
             }
+
+            // Allow normal shutdown now that result dialog is presented
+            this.release();
         }
 
         private void quick_install_show_success(InstallationRecord record, bool upgraded) {
