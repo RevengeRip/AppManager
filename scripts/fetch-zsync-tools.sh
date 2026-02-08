@@ -2,6 +2,11 @@
 # Download zsync2 binary for bundling with AppManager
 # Usage: fetch-zsync-tools.sh <arch> <output_dir>
 # zsync2 is used for efficient delta updates of AppImages
+#
+# The zsync2 releases from AppImageCommunity are AppImage binaries.
+# We extract the actual ELF binary from inside the AppImage so that it
+# can be properly bundled by quick-sharun (or any other repackaging tool)
+# without breaking the embedded squashfs runtime.
 
 set -e
 
@@ -53,11 +58,55 @@ if [ -z "$ZSYNC2_URL" ]; then
     exit 1
 fi
 
-# Download zsync2 AppImage directly as the zsync2 binary
-# We use the AppImage directly since the extracted binary has library dependencies
+# Download zsync2 AppImage to a temporary file
 echo "Downloading zsync2 from: $ZSYNC2_URL"
-curl -L -o "zsync2" "$ZSYNC2_URL"
-chmod +x "zsync2"
+APPIMAGE_TMP="zsync2-tmp.AppImage"
+curl -L -o "$APPIMAGE_TMP" "$ZSYNC2_URL"
+chmod +x "$APPIMAGE_TMP"
 
-echo "zsync2 downloaded to $OUTPUT_DIR"
+# Extract the native zsync2 binary from the AppImage.
+# Using --appimage-extract (works without FUSE) to get the real ELF binary
+# so it can be properly rebundled by quick-sharun or similar tools.
+echo "Extracting zsync2 from AppImage..."
+EXTRACT_DIR="zsync2-extract"
+rm -rf "$EXTRACT_DIR"
+
+# --appimage-extract extracts to squashfs-root/ in CWD
+./"$APPIMAGE_TMP" --appimage-extract >/dev/null 2>&1 || true
+if [ -d "squashfs-root" ]; then
+    mv "squashfs-root" "$EXTRACT_DIR"
+fi
+
+# Find the zsync2 binary inside the extracted AppImage
+EXTRACTED_BIN=""
+for candidate in \
+    "$EXTRACT_DIR/usr/bin/zsync2" \
+    "$EXTRACT_DIR/usr/local/bin/zsync2" \
+    "$EXTRACT_DIR/bin/zsync2" \
+    "$EXTRACT_DIR/AppRun"; do
+    if [ -f "$candidate" ] && [ -x "$candidate" ]; then
+        # Verify it's an actual ELF binary, not a script
+        if file "$candidate" 2>/dev/null | grep -q "ELF"; then
+            EXTRACTED_BIN="$candidate"
+            break
+        fi
+    fi
+done
+
+if [ -n "$EXTRACTED_BIN" ]; then
+    cp "$EXTRACTED_BIN" zsync2
+    chmod +x zsync2
+    echo "Extracted native zsync2 binary"
+else
+    # Fallback: use the AppImage directly (will work on systems with FUSE
+    # but may not survive repackaging by quick-sharun)
+    echo "Warning: Could not extract native binary, using AppImage directly"
+    cp "$APPIMAGE_TMP" zsync2
+fi
+
+# Cleanup
+rm -f "$APPIMAGE_TMP"
+rm -rf "$EXTRACT_DIR"
+
+echo "zsync2 installed to $OUTPUT_DIR"
 ls -la zsync2
