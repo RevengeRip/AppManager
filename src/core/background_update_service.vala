@@ -274,6 +274,7 @@ X-XDP-Autostart=com.github.AppManager
             int updated = 0;
             int skipped = 0;
             int failed = 0;
+            bool staged_changed = false;
 
             foreach (var result in results) {
                 switch (result.status) {
@@ -281,6 +282,9 @@ X-XDP-Autostart=com.github.AppManager
                         updated++;
                         log_debug("background update: updated %s".printf(result.record.name ?? result.record.id));
                         append_update_log("UPDATED %s".printf(result.record.name ?? result.record.id));
+                        // Remove from staged updates on successful install
+                        staged_updates.remove(result.record.id);
+                        staged_changed = true;
                         break;
                     case UpdateStatus.SKIPPED:
                         skipped++;
@@ -291,6 +295,10 @@ X-XDP-Autostart=com.github.AppManager
                         append_update_log("FAILED %s: %s".printf(result.record.name ?? result.record.id, result.message));
                         break;
                 }
+            }
+
+            if (staged_changed) {
+                staged_updates.save();
             }
 
             log_debug("background update: finished (updated=%d skipped=%d failed=%d)".printf(updated, skipped, failed));
@@ -375,12 +383,19 @@ X-XDP-Autostart=com.github.AppManager
         }
 
         /**
-         * Checks for staged updates on login and sends a notification if background update check is enabled.
+         * Checks for staged updates on login and sends a notification only in notify-only mode.
          * This is called when the background daemon starts (on system login).
+         * When auto-update is enabled, no notification is sent — updates are installed silently.
          */
         private void check_staged_updates_on_login() {
             if (!settings.get_boolean("auto-check-updates")) {
                 log_debug("background daemon: auto-check disabled, skipping staged updates check on login");
+                return;
+            }
+
+            // Only notify in notify-only mode; auto-update installs silently
+            if (settings.get_boolean("auto-update-apps")) {
+                log_debug("background daemon: auto-update enabled, skipping staged update notification on login");
                 return;
             }
 
@@ -461,7 +476,7 @@ X-XDP-Autostart=com.github.AppManager
         public void run_daemon() {
             log_debug("background daemon: starting persistent service");
 
-            // On login, check for staged updates and notify if auto-update is enabled
+            // On login, re-notify about staged updates (notify-only mode only)
             check_staged_updates_on_login();
 
             // Check immediately on startup if interval has elapsed
