@@ -31,7 +31,7 @@ namespace AppManager.Utils {
             return null;
         }
 
-        public static Gtk.Image? load_app_icon(string icon_path) {
+        public static Gtk.Image? load_app_icon(string icon_path, int pixel_size = 48) {
             // Extract icon name from the path (without extension)
             var icon_file = File.new_for_path(icon_path);
             var icon_basename = icon_file.get_basename();
@@ -47,7 +47,7 @@ namespace AppManager.Utils {
             var icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
             if (icon_theme.has_icon(icon_name)) {
                 var icon_image = new Gtk.Image.from_icon_name(icon_name);
-                icon_image.set_pixel_size(48);                
+                icon_image.set_pixel_size(pixel_size);                
                 return icon_image;
             }
 
@@ -56,7 +56,7 @@ namespace AppManager.Utils {
                 try {
                     var icon_texture = Gdk.Texture.from_file(icon_file);
                     var icon_image = new Gtk.Image.from_paintable(icon_texture);
-                    icon_image.set_pixel_size(48);
+                    icon_image.set_pixel_size(pixel_size);
                     return icon_image;
                 } catch (Error e) {
                     warning("Failed to load icon from file %s: %s", icon_path, e.message);

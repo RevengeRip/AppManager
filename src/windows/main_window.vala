@@ -42,6 +42,14 @@ namespace AppManager {
         private bool has_installations = true;
         private StagedUpdatesManager staged_updates;
 
+        // Grid view fields
+        private Gtk.FlowBox? grid_flow_box;
+        private Gtk.ScrolledWindow? grid_scroll;
+        private Gtk.Button? view_toggle_button;
+        private Gtk.Box? apps_title_bar;
+        private Gtk.Label? apps_title_label;
+        private string view_mode = "list";
+
         public MainWindow(Application app, InstallationRegistry registry, Installer installer, Settings settings) {
             Object(application: app);
             debug("MainWindow: constructor called");
@@ -57,6 +65,10 @@ namespace AppManager {
             this.updating_records = new Gee.HashSet<string>();
             this.active_details_window = null;
             this.app_rows = new Gee.ArrayList<Adw.PreferencesRow>();
+            this.view_mode = settings.get_string("app-list-view-mode");
+            if (this.view_mode != "list" && this.view_mode != "grid") {
+                this.view_mode = "list";
+            }
             //add_css_class("devel");
             this.set_default_size(settings.get_int("window-width"), settings.get_int("window-height"));
             build_ui();
@@ -119,9 +131,25 @@ namespace AppManager {
             general_page.add_css_class("main-apps-page");
 
             apps_group = new Adw.PreferencesGroup();
-            apps_group.title = _("My Apps");
-            
             general_page.add(apps_group);
+
+            // Grid view: FlowBox in its own ScrolledWindow for smooth scrolling
+            grid_flow_box = new Gtk.FlowBox();
+            grid_flow_box.set_valign(Gtk.Align.START);
+            grid_flow_box.set_halign(Gtk.Align.FILL);
+            grid_flow_box.set_homogeneous(true);
+            grid_flow_box.set_min_children_per_line(2);
+            grid_flow_box.set_column_spacing(6);
+            grid_flow_box.set_row_spacing(6);
+            grid_flow_box.set_selection_mode(Gtk.SelectionMode.NONE);
+            grid_flow_box.add_css_class("app-grid");
+            grid_flow_box.child_activated.connect(on_grid_child_activated);
+
+            grid_scroll = new Gtk.ScrolledWindow();
+            grid_scroll.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+            grid_scroll.set_hexpand(true);
+            grid_scroll.set_vexpand(true);
+            grid_scroll.set_child(grid_flow_box);
 
             empty_state_box = build_empty_state();
 
@@ -130,6 +158,7 @@ namespace AppManager {
             content_stack.set_hexpand(true);
             content_stack.set_vexpand(true);
             content_stack.add_named(general_page, "list");
+            content_stack.add_named(grid_scroll, "grid");
             content_stack.add_named(empty_state_box, "empty");
             content_stack.set_visible_child_name("list");
 
@@ -227,7 +256,6 @@ namespace AppManager {
         private void ensure_apps_group_present() {
             if (apps_group == null) {
                 apps_group = new Adw.PreferencesGroup();
-                apps_group.title = _("My Apps");
             }
             if (apps_group.get_parent() == null) {
                 general_page.add(apps_group);
@@ -274,11 +302,24 @@ namespace AppManager {
             if (empty_state_label != null) {
                 empty_state_label.set_text(message);
             }
+            if (apps_title_bar != null) {
+                apps_title_bar.set_visible(false);
+            }
             content_stack.set_visible_child_name("empty");
         }
 
         private void show_list_state() {
+            if (apps_title_bar != null) {
+                apps_title_bar.set_visible(true);
+            }
             content_stack.set_visible_child_name("list");
+        }
+
+        private void show_grid_state() {
+            if (apps_title_bar != null) {
+                apps_title_bar.set_visible(true);
+            }
+            content_stack.set_visible_child_name("grid");
         }
 
         private void refresh_installations() {
@@ -312,12 +353,18 @@ namespace AppManager {
                 return;
             }
 
-            show_list_state();
-
             var sorted = new Gee.ArrayList<InstallationRecord>();
             sorted.add_all(filtered_list);
             sort_records_by_updated(sorted);
-            populate_group(apps_group, sorted);
+
+            if (view_mode == "grid") {
+                clear_grid_children();
+                show_grid_state();
+                populate_grid(sorted);
+            } else {
+                show_list_state();
+                populate_group(apps_group, sorted);
+            }
         }
 
         private void prune_pending_keys_and_staged_updates(InstallationRecord[] records) {
@@ -377,11 +424,11 @@ namespace AppManager {
         }
 
         private void update_apps_group_title(int count) {
-            if (apps_group == null) {
+            if (apps_title_label == null) {
                 return;
             }
             var base_title = _("My Apps");
-            apps_group.title = count > 0 ? "%s (%d)".printf(base_title, count) : base_title;
+            apps_title_label.set_text(count > 0 ? "%s (%d)".printf(base_title, count) : base_title);
         }
 
         private void sort_records_by_updated(Gee.ArrayList<InstallationRecord> records) {
@@ -460,6 +507,114 @@ namespace AppManager {
 
                 group.add(row);
                 app_rows.add(row);
+            }
+        }
+
+        private void clear_grid_children() {
+            if (grid_flow_box == null) {
+                return;
+            }
+            var child = grid_flow_box.get_first_child();
+            while (child != null) {
+                var next = child.get_next_sibling();
+                grid_flow_box.remove(child);
+                child = next;
+            }
+        }
+
+        private void populate_grid(Gee.ArrayList<InstallationRecord> records) {
+            clear_grid_children();
+            foreach (var record in records) {
+                var cell = build_grid_cell(record);
+                grid_flow_box.append(cell);
+            }
+        }
+
+        private Gtk.Widget build_grid_cell(InstallationRecord record) {
+            var cell_box = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
+            cell_box.add_css_class("app-grid-cell");
+            cell_box.set_halign(Gtk.Align.CENTER);
+            cell_box.set_valign(Gtk.Align.START);
+
+            // Icon with overlay for status indicators
+            var overlay = new Gtk.Overlay();
+            overlay.set_halign(Gtk.Align.CENTER);
+
+            Gtk.Image icon_image = null;
+            if (record.icon_path != null && record.icon_path.strip() != "") {
+                icon_image = UiUtils.load_app_icon(record.icon_path, 96);
+            }
+            if (icon_image == null) {
+                icon_image = new Gtk.Image.from_icon_name("application-x-executable-symbolic");
+                icon_image.set_pixel_size(96);
+            }
+            overlay.set_child(icon_image);
+
+            // Status overlay: spinner or update dot
+            var state_key = record_state_key(record);
+            if (updating_records.contains(state_key)) {
+                var spinner = new Gtk.Spinner();
+                spinner.set_size_request(18, 18);
+                spinner.spinning = true;
+                spinner.set_halign(Gtk.Align.END);
+                spinner.set_valign(Gtk.Align.END);
+                spinner.add_css_class("grid-update-spinner");
+                spinner.set_tooltip_text(_("Updating..."));
+                overlay.add_overlay(spinner);
+            } else if (pending_update_keys.contains(state_key)) {
+                var update_dot = new Gtk.Label("●");
+                update_dot.add_css_class("grid-update-indicator");
+                update_dot.set_halign(Gtk.Align.END);
+                update_dot.set_valign(Gtk.Align.END);
+                update_dot.set_tooltip_text(_("Update available"));
+                overlay.add_overlay(update_dot);
+            }
+
+            cell_box.append(overlay);
+
+            // App name label (same size as list view)
+            var name_label = new Gtk.Label(record.name ?? _("Unknown"));
+            name_label.set_ellipsize(Pango.EllipsizeMode.END);
+            name_label.set_max_width_chars(16);
+            name_label.set_justify(Gtk.Justification.CENTER);
+            name_label.set_halign(Gtk.Align.CENTER);
+            cell_box.append(name_label);
+
+            // Size line
+            var size_text = format_record_size(record);
+            if (size_text != null) {
+                var size_label = new Gtk.Label(size_text);
+                size_label.add_css_class("dim-label");
+                size_label.add_css_class("caption");
+                size_label.set_halign(Gtk.Align.CENTER);
+                cell_box.append(size_label);
+            }
+
+            // Install/update time line
+            var time_text = format_time_label(record);
+            if (time_text != null) {
+                var time_label = new Gtk.Label(time_text);
+                time_label.add_css_class("dim-label");
+                time_label.add_css_class("caption");
+                time_label.set_ellipsize(Pango.EllipsizeMode.END);
+                time_label.set_max_width_chars(18);
+                time_label.set_halign(Gtk.Align.CENTER);
+                cell_box.append(time_label);
+            }
+
+            // Store record reference for click handling
+            cell_box.set_data<InstallationRecord>("record", record);
+
+            return cell_box;
+        }
+
+        private void on_grid_child_activated(Gtk.FlowBoxChild child) {
+            var cell_box = child.get_child();
+            if (cell_box != null) {
+                var record = cell_box.get_data<InstallationRecord>("record");
+                if (record != null) {
+                    show_detail_page(record);
+                }
             }
         }
 
@@ -730,10 +885,50 @@ namespace AppManager {
                 });
                 fuse_banner.revealed = !is_fuse_installed();
                 toolbar.add_top_bar(fuse_banner);
+
+                // Frozen "My Apps" title bar with view mode toggle
+                apps_title_bar = new Gtk.Box(Gtk.Orientation.HORIZONTAL, 6);
+                apps_title_bar.add_css_class("apps-title-bar");
+
+                apps_title_label = new Gtk.Label(_("My Apps"));
+                apps_title_label.add_css_class("title-4");
+                apps_title_label.set_hexpand(true);
+                apps_title_label.set_halign(Gtk.Align.START);
+
+                view_toggle_button = new Gtk.Button();
+                view_toggle_button.add_css_class("flat");
+                update_view_toggle_icon();
+                view_toggle_button.clicked.connect(() => {
+                    if (view_mode == "list") {
+                        view_mode = "grid";
+                    } else {
+                        view_mode = "list";
+                    }
+                    settings.set_string("app-list-view-mode", view_mode);
+                    update_view_toggle_icon();
+                    refresh_installations();
+                });
+
+                apps_title_bar.append(apps_title_label);
+                apps_title_bar.append(view_toggle_button);
+                toolbar.add_top_bar(apps_title_bar);
             }
 
             toolbar.set_content(content);
             return toolbar;
+        }
+
+        private void update_view_toggle_icon() {
+            if (view_toggle_button == null) {
+                return;
+            }
+            if (view_mode == "list") {
+                view_toggle_button.set_icon_name("view-grid-symbolic");
+                view_toggle_button.set_tooltip_text(_("Switch to grid view"));
+            } else {
+                view_toggle_button.set_icon_name("view-list-symbolic");
+                view_toggle_button.set_tooltip_text(_("Switch to list view"));
+            }
         }
 
         private bool is_fuse_installed() {

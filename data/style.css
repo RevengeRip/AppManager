@@ -54,3 +54,37 @@
 .main-apps-page > scrolledwindow > viewport > clamp > box {
     padding-bottom: 30px;
 }
+
+/* Frozen title bar */
+.apps-title-bar {
+    padding: 12px 16px 4px 16px;
+}
+
+/* Grid view styles */
+.app-grid flowboxchild {
+    padding: 6px;
+    border-radius: 12px;
+    transition: background-color 200ms ease;
+}
+
+.app-grid flowboxchild:hover {
+    background-color: alpha(currentColor, 0.07);
+}
+
+.app-grid-cell {
+    padding: 12px 8px 8px 8px;
+}
+
+.grid-update-indicator {
+    color: @accent_color;
+    font-size: 10px;
+    background-color: @window_bg_color;
+    border-radius: 50%;
+    padding: 0px 2px;
+}
+
+.grid-update-spinner {
+    background-color: alpha(@window_bg_color, 0.8);
+    border-radius: 50%;
+    padding: 2px;
+}

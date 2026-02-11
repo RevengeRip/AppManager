@@ -51,5 +51,10 @@
       <summary>Skip drag-and-drop installer window</summary>
       <description>When enabled, opening an AppImage shows a confirmation dialog directly instead of the drag-and-drop installer window.</description>
     </key>
+    <key name="app-list-view-mode" type="s">
+      <default>'list'</default>
+      <summary>App list view mode</summary>
+      <description>The layout mode for the app list. Either 'list' for a traditional list view or 'grid' for an icon grid view.</description>
+    </key>
   </schema>
 </schemalist>
