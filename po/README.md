@@ -19,6 +19,7 @@
 | Lithuanian | lt | 77% |
 | Latvian | lv | 77% |
 | Norwegian Bokmål | nb | 77% |
+| Dutch | nl | 100% |
 | Portuguese (Brazil) | pt_BR | 77% |
 | Swedish | sv | 76% |
 | Chinese (Simplified) | zh_CN | 80% |
