@@ -106,6 +106,17 @@ meson setup build-anyimage --prefix=/usr \
 meson compile -C build-anyimage
 meson install -C build-anyimage
 
+# ── Install bundled libraries needed by fetched tools ────────────────
+# The fetch-zsync-tools.sh script extracts zsync2 from an AppImage that
+# was built against OpenSSL 1.1.  It also extracts the missing .so files
+# into build-anyimage/lib/, but meson only installs the binary.
+# Copy those libs to the system so quick-sharun's ldd check passes.
+if [ -d build-anyimage/lib ]; then
+    echo "Installing bundled libraries for zsync2..."
+    cp -v build-anyimage/lib/*.so* /usr/lib/ 2>/dev/null || true
+    ldconfig 2>/dev/null || true
+fi
+
 # ── Get version ──────────────────────────────────────────────────────
 VERSION=$(meson introspect build-anyimage --projectinfo 2>/dev/null \
     | awk -F'"' '/"version"/{print $4}')
