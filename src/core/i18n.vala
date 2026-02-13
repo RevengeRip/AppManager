@@ -16,7 +16,12 @@ namespace AppManager.Core {
         if (i18n_initialized) return;
         i18n_initialized = true;
 
-        Intl.setlocale(LocaleCategory.ALL, "");
+        // Try the user's locale from environment; if unsupported, try common UTF-8 fallbacks
+        if (Intl.setlocale(LocaleCategory.ALL, "") == null) {
+            if (Intl.setlocale(LocaleCategory.ALL, "C.UTF-8") == null) {
+                Intl.setlocale(LocaleCategory.ALL, "C");
+            }
+        }
         Intl.bindtextdomain(GETTEXT_PACKAGE, get_locale_dir());
         Intl.bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
         Intl.textdomain(GETTEXT_PACKAGE);

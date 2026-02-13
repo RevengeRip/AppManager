@@ -12,6 +12,16 @@ namespace AppManager.Utils {
         private static bool app_css_applied = false;
         private static ulong css_display_handler = 0;
 
+        // Cache loaded textures to avoid re-reading from disk on every refresh
+        private static Gee.HashMap<string, Gdk.Paintable>? texture_cache = null;
+
+        private static Gee.HashMap<string, Gdk.Paintable> get_texture_cache() {
+            if (texture_cache == null) {
+                texture_cache = new Gee.HashMap<string, Gdk.Paintable>();
+            }
+            return texture_cache;
+        }
+
 
         public static Gdk.Paintable? load_icon_from_appimage(string path) {
             string? temp_dir = null;
@@ -31,7 +41,7 @@ namespace AppManager.Utils {
             return null;
         }
 
-        public static Gtk.Image? load_app_icon(string icon_path) {
+        public static Gtk.Image? load_app_icon(string icon_path, int pixel_size = 48) {
             // Extract icon name from the path (without extension)
             var icon_file = File.new_for_path(icon_path);
             var icon_basename = icon_file.get_basename();
@@ -47,16 +57,25 @@ namespace AppManager.Utils {
             var icon_theme = Gtk.IconTheme.get_for_display(Gdk.Display.get_default());
             if (icon_theme.has_icon(icon_name)) {
                 var icon_image = new Gtk.Image.from_icon_name(icon_name);
-                icon_image.set_pixel_size(48);                
+                icon_image.set_pixel_size(pixel_size);                
                 return icon_image;
             }
 
-            // Fallback to loading from file path
+            // Fallback to loading from file path with texture cache
+            var cache = get_texture_cache();
+            if (cache.has_key(icon_path)) {
+                var cached = cache.get(icon_path);
+                var icon_image = new Gtk.Image.from_paintable(cached);
+                icon_image.set_pixel_size(pixel_size);
+                return icon_image;
+            }
+
             if (icon_file.query_exists()) {
                 try {
                     var icon_texture = Gdk.Texture.from_file(icon_file);
+                    cache.set(icon_path, icon_texture);
                     var icon_image = new Gtk.Image.from_paintable(icon_texture);
-                    icon_image.set_pixel_size(48);
+                    icon_image.set_pixel_size(pixel_size);
                     return icon_image;
                 } catch (Error e) {
                     warning("Failed to load icon from file %s: %s", icon_path, e.message);

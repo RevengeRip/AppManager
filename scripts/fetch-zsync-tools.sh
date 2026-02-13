@@ -105,15 +105,14 @@ if [ -n "$EXTRACTED_BIN" ]; then
         missing_libs=$(ldd zsync2 2>/dev/null | grep "not found" | awk '{print $1}' || true)
         if [ -n "$missing_libs" ]; then
             echo "Installing bundled libraries needed by zsync2..."
+            mkdir -p "$OUTPUT_DIR/lib"
             for lib in $missing_libs; do
                 found=$(find "$EXTRACT_DIR" -name "$lib" -type f 2>/dev/null | head -1)
                 if [ -n "$found" ]; then
-                    cp "$found" /usr/lib/
-                    echo "  installed $lib"
+                    cp "$found" "$OUTPUT_DIR/lib/"
+                    echo "  installed $lib to $OUTPUT_DIR/lib/"
                 fi
             done
-            # Refresh linker cache
-            ldconfig 2>/dev/null || true
         fi
     fi
 else
