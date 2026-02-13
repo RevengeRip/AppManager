@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: app-manager\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-02-08 19:20+0200\n"
+"POT-Creation-Date: 2026-02-13 15:55+0200\n"
 "PO-Revision-Date: 2026-01-27 12:00+0000\n"
 "Last-Translator: \n"
 "Language-Team: Japanese\n"
@@ -28,8 +28,8 @@ msgid ""
 "(AppRun, .desktop, or icon)."
 msgstr "必要なファイルがありません（AppRun、.desktop、またはアイコン）"
 
-#: src/application.vala:248 src/application.vala:260 src/application.vala:766
-#: src/application.vala:821 src/application.vala:833
+#: src/application.vala:248 src/application.vala:260 src/application.vala:780
+#: src/application.vala:835 src/application.vala:847
 #: src/windows/dialog_window.vala:95 src/windows/drop_window.vala:95
 #: src/windows/drop_window.vala:105
 msgid "Close"
@@ -72,8 +72,8 @@ msgstr "インストール"
 #: src/application.vala:366 src/application.vala:397
 #: src/windows/details_window.vala:911 src/windows/drop_window.vala:235
 #: src/windows/drop_window.vala:409 src/windows/drop_window.vala:965
-#: src/windows/preferences_window.vala:347
-#: src/windows/preferences_window.vala:381
+#: src/windows/preferences_window.vala:432
+#: src/windows/preferences_window.vala:466
 msgid "Cancel"
 msgstr "キャンセル"
 
@@ -87,7 +87,7 @@ msgstr "%sを更新しますか？"
 msgid "Version unknown"
 msgstr "バージョン不明"
 
-#: src/application.vala:393 src/application.vala:528
+#: src/application.vala:393 src/application.vala:536
 #: src/windows/drop_window.vala:388 src/windows/drop_window.vala:545
 msgid "Unknown version"
 msgstr "不明なバージョン"
@@ -138,84 +138,84 @@ msgstr "停止"
 msgid "Replace"
 msgstr "置き換え"
 
-#: src/application.vala:512 src/windows/drop_window.vala:528
+#: src/application.vala:520 src/windows/drop_window.vala:528
 msgid "Successfully Updated"
 msgstr "正常に更新されました"
 
-#: src/application.vala:512 src/windows/drop_window.vala:526
+#: src/application.vala:520 src/windows/drop_window.vala:526
 msgid "Successfully Installed"
 msgstr "正常にインストールされました"
 
-#: src/application.vala:529 src/windows/drop_window.vala:546
+#: src/application.vala:537 src/windows/drop_window.vala:546
 #, c-format
 msgid "Version %s"
 msgstr "バージョン %s"
 
-#: src/application.vala:533 src/windows/drop_window.vala:550
+#: src/application.vala:541 src/windows/drop_window.vala:550
 msgid "Open"
 msgstr "開く"
 
-#: src/application.vala:534 src/windows/drop_window.vala:551
+#: src/application.vala:542 src/windows/drop_window.vala:551
 msgid "Done"
 msgstr "完了"
 
-#: src/application.vala:559 src/windows/drop_window.vala:577
+#: src/application.vala:567 src/windows/drop_window.vala:577
 msgid "Installation failed"
 msgstr "インストール失敗"
 
-#: src/application.vala:561 src/windows/drop_window.vala:587
+#: src/application.vala:569 src/windows/drop_window.vala:587
 msgid "Dismiss"
 msgstr "閉じる"
 
-#: src/application.vala:763
+#: src/application.vala:777
 msgid "Uninstall failed"
 msgstr "アンインストール失敗"
 
-#: src/application.vala:764
+#: src/application.vala:778
 #, c-format
 msgid "%s could not be removed: %s"
 msgstr "%sを削除できませんでした: %s"
 
-#: src/application.vala:771
+#: src/application.vala:785
 msgid "Moved to Trash"
 msgstr "ゴミ箱に移動しました"
 
-#: src/application.vala:779
+#: src/application.vala:793
 msgid "Extraction is only available for portable installations."
 msgstr "展開はポータブルインストールでのみ利用可能です。"
 
-#: src/application.vala:815
+#: src/application.vala:829
 msgid "Extracted for faster launch"
 msgstr "より速い起動のために展開されました"
 
-#: src/application.vala:818
+#: src/application.vala:832
 msgid "Extraction complete"
 msgstr "展開完了"
 
-#: src/application.vala:819
+#: src/application.vala:833
 #, c-format
 msgid "%s was extracted and will open faster."
 msgstr "%sが展開され、より速く開くようになります。"
 
-#: src/application.vala:830
+#: src/application.vala:844
 msgid "Extraction failed"
 msgstr "展開失敗"
 
-#: src/application.vala:831
+#: src/application.vala:845
 #, c-format
 msgid "%s could not be extracted: %s"
 msgstr "%sを展開できませんでした: %s"
 
-#: src/core/background_update_service.vala:306
+#: src/core/background_update_service.vala:314
 msgid "App updates available"
 msgstr "アプリの更新が利用可能です"
 
-#: src/core/background_update_service.vala:308
+#: src/core/background_update_service.vala:316
 #, c-format
 msgid "%d app update(s) available"
 msgstr "%d個のアプリ更新が利用可能です"
 
-#: src/core/background_update_service.vala:317
+#: src/core/background_update_service.vala:325
 msgid "Open AppManager"
 msgstr "AppManagerを開く"
 
@@ -283,69 +283,85 @@ msgid ""
 "%s"
 msgstr ""
 
-#: src/core/updater.vala:547 src/core/updater.vala:612
+#: src/core/updater.vala:587 src/core/updater.vala:652
 msgid "No update address configured"
 msgstr "更新アドレスが設定されていません"
 
-#: src/core/updater.vala:552 src/core/updater.vala:621
+#: src/core/updater.vala:592 src/core/updater.vala:661
 msgid "Update source not supported"
 msgstr "更新ソースがサポートされていません"
 
-#: src/core/updater.vala:568 src/core/updater.vala:639
+#: src/core/updater.vala:608 src/core/updater.vala:679
 msgid "Unable to read releases"
 msgstr "リリースを読み取れません"
 
-#: src/core/updater.vala:573 src/core/updater.vala:665
+#: src/core/updater.vala:613 src/core/updater.vala:705
 #, c-format
 msgid "No matching AppImage found for %s"
 msgstr "%s用の一致するAppImageが見つかりません"
 
-#: src/core/updater.vala:581 src/core/updater.vala:587
-#: src/core/updater.vala:649 src/core/updater.vala:657
-#: src/core/updater.vala:770 src/core/updater.vala:795
-#: src/core/updater.vala:1245 src/core/updater.vala:1273
-#: src/core/updater.vala:1315 src/core/updater.vala:1339
+#: src/core/updater.vala:621 src/core/updater.vala:627
+#: src/core/updater.vala:689 src/core/updater.vala:697
+#: src/core/updater.vala:810 src/core/updater.vala:835
+#: src/core/updater.vala:1298 src/core/updater.vala:1326
+#: src/core/updater.vala:1368 src/core/updater.vala:1392
 msgid "Already up to date"
 msgstr "既に最新です"
 
-#: src/core/updater.vala:687 src/core/updater.vala:1381
-#: src/core/updater.vala:1446
+#: src/core/updater.vala:727 src/core/updater.vala:1434
+#: src/core/updater.vala:1499
 #, fuzzy, c-format
 msgid "Updated to %s"
 msgstr "%sを更新しますか？"
 
-#: src/core/updater.vala:758 src/core/updater.vala:788
-#: src/core/updater.vala:1260
+#: src/core/updater.vala:798 src/core/updater.vala:828
+#: src/core/updater.vala:1313
 msgid "Server does not provide change tracking headers"
 msgstr ""
 
-#: src/core/updater.vala:766 src/core/updater.vala:1269
-#: src/core/updater.vala:1333
+#: src/core/updater.vala:806 src/core/updater.vala:1322
+#: src/core/updater.vala:1386
 msgid "Baseline recorded"
 msgstr ""
 
-#: src/core/updater.vala:815 src/core/updater.vala:1382
-#: src/core/updater.vala:1447
+#: src/core/updater.vala:855 src/core/updater.vala:1435
+#: src/core/updater.vala:1500
 #, fuzzy
 msgid "Updated"
 msgstr "更新"
 
-#: src/core/updater.vala:1223
+#: src/core/updater.vala:962
+msgid ""
+"GitHub authentication failed (401). Check your token in Preferences → GitHub."
+msgstr ""
+
+#: src/core/updater.vala:967
+msgid ""
+"GitHub API rate limit exceeded. Add a token in Preferences → GitHub to "
+"increase your limit."
+msgstr ""
+
+#: src/core/updater.vala:969
+msgid ""
+"GitHub access forbidden (403). Your token may lack the required permissions."
+msgstr ""
+
+#: src/core/updater.vala:1276
 msgid "Unknown zsync source type"
 msgstr ""
 
-#: src/core/updater.vala:1290
+#: src/core/updater.vala:1343
 msgid "Unknown zsync source"
 msgstr ""
 
-#: src/core/updater.vala:1419
+#: src/core/updater.vala:1472
 msgid "Cannot determine download URL from zsync URL"
 msgstr ""
 
 #: src/windows/details_window.vala:100
+#, c-format
 msgid "⚠️ '%s' is not in $PATH. App will not launch from the terminal"
-msgstr ""
-"⚠️ '%s'が$PATHにありません。アプリはターミナルから起動できません"
+msgstr "⚠️ '%s'が$PATHにありません。アプリはターミナルから起動できません"
 
 #: src/windows/details_window.vala:160
 msgid "Show in Files"
@@ -452,6 +468,7 @@ msgid "Add to $PATH"
 msgstr "$PATHに追加"
 
 #: src/windows/details_window.vala:650
+#, c-format
 msgid "Create a launcher in %s so you can run it from the terminal"
 msgstr "ターミナルから実行できるよう%sにランチャーを作成"
 
@@ -467,7 +484,8 @@ msgstr "AppImageを展開"
 msgid "Restore default"
 msgstr "デフォルトに戻す"
 
-#: src/windows/details_window.vala:799 src/windows/main_window.vala:447
+#: src/windows/details_window.vala:799 src/windows/main_window.vala:494
+#: src/windows/main_window.vala:562
 msgid "Updating..."
 msgstr "更新中..."
 
@@ -591,277 +609,289 @@ msgstr "このAppImageの真正性を検証します。"
 msgid "Enter the SHA256 hash "
 msgstr "SHA256ハッシュを入力 "
 
-#: src/windows/main_window.vala:48 src/windows/main_window.vala:138
+#: src/windows/main_window.vala:56 src/windows/main_window.vala:167
 #: data/com.github.AppManager.metainfo.xml:4
 msgid "AppManager"
 msgstr "AppManager"
 
-#: src/windows/main_window.vala:122 src/windows/main_window.vala:230
-#: src/windows/main_window.vala:383
-msgid "My Apps"
-msgstr "マイアプリ"
-
-#: src/windows/main_window.vala:187
+#: src/windows/main_window.vala:216
 msgid "Get more ..."
 msgstr "もっと入手..."
 
-#: src/windows/main_window.vala:199
+#: src/windows/main_window.vala:228
 msgid "Find more AppImages"
 msgstr "AppImageをもっと探す"
 
-#: src/windows/main_window.vala:200
+#: src/windows/main_window.vala:229
 msgid "Browse these sources to discover and download AppImages"
 msgstr "これらのソースを参照してAppImageを発見・ダウンロード"
 
-#: src/windows/main_window.vala:251 src/windows/main_window.vala:310
+#: src/windows/main_window.vala:279 src/windows/main_window.vala:351
 msgid "No AppImage apps installed"
 msgstr "インストール済みのAppImageアプリはありません"
 
-#: src/windows/main_window.vala:256
+#: src/windows/main_window.vala:284
 msgid "Download AppImage and double click to install with AppManager"
 msgstr "AppImageをダウンロードしてダブルクリックでAppManagerからインストール"
 
-#: src/windows/main_window.vala:310
+#: src/windows/main_window.vala:351
 msgid "No results found"
 msgstr "結果が見つかりません"
 
-#: src/windows/main_window.vala:454
+#: src/windows/main_window.vala:430 src/windows/main_window.vala:893
+msgid "My Apps"
+msgstr "マイアプリ"
+
+#: src/windows/main_window.vala:501 src/windows/main_window.vala:569
 msgid "Update available"
 msgstr "更新可能"
 
-#: src/windows/main_window.vala:480
+#: src/windows/main_window.vala:576
+#, fuzzy
+msgid "Unknown"
+msgstr "バージョン不明"
+
+#: src/windows/main_window.vala:635
 msgid "extracted"
 msgstr "展開済み"
 
-#: src/windows/main_window.vala:537
+#: src/windows/main_window.vala:692
 msgid "Updated just now"
 msgstr "たった今更新"
 
-#: src/windows/main_window.vala:537
+#: src/windows/main_window.vala:692
 msgid "Installed just now"
 msgstr "たった今インストール"
 
-#: src/windows/main_window.vala:545
+#: src/windows/main_window.vala:700
 #, c-format
 msgid "Updated %d min ago"
 msgstr "%d分前に更新"
 
-#: src/windows/main_window.vala:545
+#: src/windows/main_window.vala:700
 #, c-format
 msgid "Installed %d min ago"
 msgstr "%d分前にインストール"
 
-#: src/windows/main_window.vala:553
+#: src/windows/main_window.vala:708
 #, c-format
 msgid "Updated %d hours ago"
 msgstr "%d時間前に更新"
 
-#: src/windows/main_window.vala:553
+#: src/windows/main_window.vala:708
 #, c-format
 msgid "Installed %d hours ago"
 msgstr "%d時間前にインストール"
 
-#: src/windows/main_window.vala:560
+#: src/windows/main_window.vala:715
 #, c-format
 msgid "Updated %d days ago"
 msgstr "%d日前に更新"
 
-#: src/windows/main_window.vala:560
+#: src/windows/main_window.vala:715
 #, c-format
 msgid "Installed %d days ago"
 msgstr "%d日前にインストール"
 
-#: src/windows/main_window.vala:576 src/windows/preferences_window.vala:34
+#: src/windows/main_window.vala:731 src/windows/preferences_window.vala:34
 msgid "Preferences"
 msgstr "設定"
 
-#: src/windows/main_window.vala:577
+#: src/windows/main_window.vala:732
 msgid "Keyboard shortcuts"
 msgstr "キーボードショートカット"
 
-#: src/windows/main_window.vala:578 src/windows/main_window.vala:1321
+#: src/windows/main_window.vala:733 src/windows/main_window.vala:1516
 msgid "About AppManager"
 msgstr "AppManagerについて"
 
-#: src/windows/main_window.vala:579
+#: src/windows/main_window.vala:734
 msgid "Quit"
 msgstr "終了"
 
-#: src/windows/main_window.vala:591
+#: src/windows/main_window.vala:746
 #, fuzzy
 msgid "Support AppManager"
 msgstr "AppManagerを終了"
 
-#: src/windows/main_window.vala:606
+#: src/windows/main_window.vala:761
 msgid "Buy Me a Coffee"
 msgstr ""
 
-#: src/windows/main_window.vala:625
+#: src/windows/main_window.vala:780
 msgid "Become a sponsor on GitHub"
 msgstr ""
 
-#: src/windows/main_window.vala:630
+#: src/windows/main_window.vala:785
 msgid "Sponsor Me ♡"
 msgstr ""
 
-#: src/windows/main_window.vala:641
+#: src/windows/main_window.vala:796
 #, fuzzy
 msgid "Star AppManager on GitHub"
 msgstr "AppManagerを終了"
 
-#: src/windows/main_window.vala:646
+#: src/windows/main_window.vala:801
 #, fuzzy
 msgid "Star AppManager"
 msgstr "AppManagerを終了"
 
-#: src/windows/main_window.vala:657
+#: src/windows/main_window.vala:812
 msgid "View contributors on GitHub"
 msgstr ""
 
-#: src/windows/main_window.vala:662
+#: src/windows/main_window.vala:817
 msgid "Contributors"
 msgstr ""
 
-#: src/windows/main_window.vala:685 src/windows/main_window.vala:1319
+#: src/windows/main_window.vala:840 src/windows/main_window.vala:1514
 msgid "Search"
 msgstr "検索"
 
-#: src/windows/main_window.vala:691
+#: src/windows/main_window.vala:846
 msgid "Support this project"
 msgstr ""
 
-#: src/windows/main_window.vala:701
+#: src/windows/main_window.vala:856
 msgid "More actions"
 msgstr "その他のアクション"
 
-#: src/windows/main_window.vala:716
+#: src/windows/main_window.vala:871
 msgid "Search apps..."
 msgstr "アプリを検索..."
 
-#: src/windows/main_window.vala:724
+#: src/windows/main_window.vala:879
 msgid "FUSE is not installed. Some AppImages may fail to run"
 msgstr ""
 "FUSEがインストールされていません。一部のAppImageが実行できない可能性がありま"
 "す"
 
-#: src/windows/main_window.vala:726
+#: src/windows/main_window.vala:881
 msgid "Learn More"
 msgstr "詳細を見る"
 
-#: src/windows/main_window.vala:805 src/windows/main_window.vala:876
+#: src/windows/main_window.vala:927
+msgid "Switch to grid view"
+msgstr ""
+
+#: src/windows/main_window.vala:930
+msgid "Switch to list view"
+msgstr ""
+
+#: src/windows/main_window.vala:1000 src/windows/main_window.vala:1071
 msgid "Updates already running"
 msgstr "更新は既に実行中です"
 
-#: src/windows/main_window.vala:853
+#: src/windows/main_window.vala:1048
 msgid "Cancel update"
 msgstr "更新をキャンセル"
 
-#: src/windows/main_window.vala:884
+#: src/windows/main_window.vala:1079
 msgid "Cancelling..."
 msgstr "キャンセル中..."
 
-#: src/windows/main_window.vala:910
+#: src/windows/main_window.vala:1105
 msgid "Update check cancelled"
 msgstr "更新チェックがキャンセルされました"
 
-#: src/windows/main_window.vala:940
+#: src/windows/main_window.vala:1135
 #, c-format
 msgid "%d app(s) have updates"
 msgstr "%d個のアプリに更新があります"
 
-#: src/windows/main_window.vala:943
+#: src/windows/main_window.vala:1138
 msgid "No updates available right now"
 msgstr "現在利用可能な更新はありません"
 
-#: src/windows/main_window.vala:950
+#: src/windows/main_window.vala:1145
 msgid "Nothing queued for updating"
 msgstr "更新キューに何もありません"
 
-#: src/windows/main_window.vala:977
+#: src/windows/main_window.vala:1172
 msgid "Update cancelled"
 msgstr "更新がキャンセルされました"
 
-#: src/windows/main_window.vala:1114
+#: src/windows/main_window.vala:1309
 msgid "Checking updates"
 msgstr "更新を確認中"
 
-#: src/windows/main_window.vala:1117
+#: src/windows/main_window.vala:1312
 msgid "Update Apps"
 msgstr "アプリを更新"
 
-#: src/windows/main_window.vala:1120
+#: src/windows/main_window.vala:1315
 msgid "Updating apps"
 msgstr "アプリを更新中"
 
-#: src/windows/main_window.vala:1123
+#: src/windows/main_window.vala:1318
 msgid "Check updates"
 msgstr "更新を確認"
 
-#: src/windows/main_window.vala:1147
+#: src/windows/main_window.vala:1342
 msgid "No installed apps to update"
 msgstr "更新するインストール済みアプリがありません"
 
-#: src/windows/main_window.vala:1187
+#: src/windows/main_window.vala:1382
 #, c-format
 msgid "Updated %d app(s)"
 msgstr "%d個のアプリを更新しました"
 
-#: src/windows/main_window.vala:1190
+#: src/windows/main_window.vala:1385
 #, c-format
 msgid "%d update(s) failed"
 msgstr "%d個の更新に失敗しました"
 
-#: src/windows/main_window.vala:1198
+#: src/windows/main_window.vala:1393
 msgid "Add update addresses in Details to enable updates"
 msgstr "詳細で更新アドレスを追加して更新を有効にしてください"
 
-#: src/windows/main_window.vala:1200
+#: src/windows/main_window.vala:1395
 msgid "All supported apps are already up to date"
 msgstr "すべてのサポート対象アプリは最新です"
 
-#: src/windows/main_window.vala:1204
+#: src/windows/main_window.vala:1399
 #, c-format
 msgid "%d app(s) use unsupported update links"
 msgstr "%d個のアプリがサポートされていない更新リンクを使用しています"
 
-#: src/windows/main_window.vala:1267
+#: src/windows/main_window.vala:1462
 #, c-format
 msgid "Update available for %s"
 msgstr "%sの更新が利用可能です"
 
-#: src/windows/main_window.vala:1307
+#: src/windows/main_window.vala:1502
 msgid "General"
 msgstr "一般"
 
-#: src/windows/main_window.vala:1311
+#: src/windows/main_window.vala:1506
 msgid "Navigation"
 msgstr "ナビゲーション"
 
-#: src/windows/main_window.vala:1315
+#: src/windows/main_window.vala:1510
 msgid "Window"
 msgstr "ウィンドウ"
 
-#: src/windows/main_window.vala:1317
+#: src/windows/main_window.vala:1512
 msgid "Check for updates"
 msgstr "更新を確認"
 
-#: src/windows/main_window.vala:1318
+#: src/windows/main_window.vala:1513
 msgid "Show main menu"
 msgstr "メインメニューを表示"
 
-#: src/windows/main_window.vala:1320
+#: src/windows/main_window.vala:1515
 msgid "Show shortcuts"
 msgstr "ショートカットを表示"
 
-#: src/windows/main_window.vala:1322
+#: src/windows/main_window.vala:1517
 msgid "Close window"
 msgstr "ウィンドウを閉じる"
 
-#: src/windows/main_window.vala:1323
+#: src/windows/main_window.vala:1518
 msgid "Quit AppManager"
 msgstr "AppManagerを終了"
 
-#: src/windows/main_window.vala:1340
+#: src/windows/main_window.vala:1535
 msgid "Credits"
 msgstr "クレジット"
 
@@ -965,59 +995,142 @@ msgstr "Nautilusサムネイルの背景を非表示"
 msgid "Remove the alpha checkerboard behind thumbnails and icons"
 msgstr "サムネイルとアイコンの後ろのアルファチェッカーボードを削除"
 
-#: src/windows/preferences_window.vala:257
+#: src/windows/preferences_window.vala:211
+msgid "GitHub"
+msgstr ""
+
+#: src/windows/preferences_window.vala:212
+msgid ""
+"Authenticate with GitHub to raise the API rate limit from 60 to 5,000 "
+"requests per hour"
+msgstr ""
+
+#: src/windows/preferences_window.vala:215
+msgid "Personal access token"
+msgstr ""
+
+#: src/windows/preferences_window.vala:226
+#, fuzzy
+msgid "Apply token"
+msgstr "アプリケーション"
+
+#: src/windows/preferences_window.vala:229
+#: src/windows/preferences_window.vala:248
+msgid "GitHub token saved"
+msgstr ""
+
+#: src/windows/preferences_window.vala:235
+msgid "Clear token"
+msgstr ""
+
+#: src/windows/preferences_window.vala:239
+msgid "GitHub token cleared"
+msgstr ""
+
+#: src/windows/preferences_window.vala:255
+msgid "Test token"
+msgstr ""
+
+#: src/windows/preferences_window.vala:256
+msgid "Verify your token works and check rate limit status"
+msgstr ""
+
+#: src/windows/preferences_window.vala:260
+msgid "Test"
+msgstr ""
+
+#: src/windows/preferences_window.vala:269
+msgid "Testing…"
+msgstr ""
+
+#: src/windows/preferences_window.vala:284
+msgid "Create a token on GitHub"
+msgstr ""
+
+#: src/windows/preferences_window.vala:285
+msgid "Fine-grained token with read-only public repo access is sufficient"
+msgstr ""
+
+#: src/windows/preferences_window.vala:342
 #, fuzzy
 msgid "Select Installation Directory"
 msgstr "インストール失敗"
 
-#: src/windows/preferences_window.vala:324
+#: src/windows/preferences_window.vala:409
 msgid "Invalid Path"
 msgstr ""
 
-#: src/windows/preferences_window.vala:334
+#: src/windows/preferences_window.vala:419
 #, fuzzy
 msgid "Installation directory updated"
 msgstr "インストール失敗"
 
-#: src/windows/preferences_window.vala:344
+#: src/windows/preferences_window.vala:429
 msgid "Move Installed Apps?"
 msgstr ""
 
-#: src/windows/preferences_window.vala:345
+#: src/windows/preferences_window.vala:430
 #, c-format
 msgid ""
 "This will move %d installed app(s) to the new location. This may take a "
 "while depending on the size of your apps."
 msgstr ""
 
-#: src/windows/preferences_window.vala:348
+#: src/windows/preferences_window.vala:433
 #, fuzzy
 msgid "Move Apps"
 msgstr "マイアプリ"
 
-#: src/windows/preferences_window.vala:380
+#: src/windows/preferences_window.vala:465
 msgid "Moving Apps…"
 msgstr ""
 
-#: src/windows/preferences_window.vala:380
+#: src/windows/preferences_window.vala:465
 msgid "Please wait while your apps are being moved."
 msgstr ""
 
-#: src/windows/preferences_window.vala:417
+#: src/windows/preferences_window.vala:502
 msgid "Apps moved successfully"
 msgstr ""
 
-#: src/windows/preferences_window.vala:419
+#: src/windows/preferences_window.vala:504
 #, fuzzy
 msgid "Migration Failed"
 msgstr "展開失敗"
 
-#: src/windows/preferences_window.vala:419
+#: src/windows/preferences_window.vala:504
 msgid "Unknown error occurred"
 msgstr ""
 
-#: src/windows/preferences_window.vala:437
+#: src/windows/preferences_window.vala:522
 msgid "OK"
+msgstr ""
+
+#: src/windows/preferences_window.vala:560
+msgid "Authentication failed — token is invalid or expired"
+msgstr ""
+
+#: src/windows/preferences_window.vala:562
+msgid "Access forbidden — token lacks required permissions"
+msgstr ""
+
+#: src/windows/preferences_window.vala:568
+#, c-format
+msgid "Token is valid — %s / %s requests remaining"
+msgstr ""
+
+#: src/windows/preferences_window.vala:570
+msgid "Token is valid"
+msgstr ""
+
+#: src/windows/preferences_window.vala:573
+#, c-format
+msgid "Unexpected response (%u)"
+msgstr ""
+
+#: src/windows/preferences_window.vala:576
+#, c-format
+msgid "Connection error: %s"
 msgstr ""
 
 #: data/com.github.AppManager.metainfo.xml:6
