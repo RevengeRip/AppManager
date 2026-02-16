@@ -93,9 +93,6 @@ core_sources = files(
 
 build_info_conf = configuration_data()
 build_info_conf.set('VERSION', meson.project_version())
-build_info_conf.set('DWARFS_BUNDLE_DIR', dwarfs_tools_dir)
-build_info_conf.set('ZSYNC_BUNDLE_DIR', zsync_tools_dir)
-build_info_conf.set('SEVENZIP_BUNDLE_DIR', sevenzip_tools_dir)
 build_info = configure_file(
   input: 'src/core/build_info.vala.in',
   output: 'build_info.vala',

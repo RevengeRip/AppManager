@@ -21,47 +21,38 @@ namespace AppManager.Core {
                 return;
             }
 
+            // 1. Explicit environment override (full directory path)
             string? env_dir = Environment.get_variable("APP_MANAGER_DWARFS_DIR");
-            var candidates = new Gee.ArrayList<string>();
             if (env_dir != null && env_dir.strip() != "") {
-                candidates.add(env_dir.strip());
-            }
-
-            // Build-time bundle dir (typically /usr/bin)
-            if (DWARFS_BUNDLE_DIR != null && DWARFS_BUNDLE_DIR.strip() != "") {
-                var bundle_dir = DWARFS_BUNDLE_DIR.strip();
-                candidates.add(bundle_dir);
-
-                // If running in AppImage, check relative to APPDIR
-                var appdir = Environment.get_variable("APPDIR");
-                if (appdir != null && appdir != "") {
-                    var relative_bundle_dir = bundle_dir;
-                    if (relative_bundle_dir.has_prefix("/")) {
-                        relative_bundle_dir = relative_bundle_dir.substring(1);
-                    }
-                    candidates.add(Path.build_filename(appdir, relative_bundle_dir));
-                }
-            }
-
-            // System-wide fallback locations (for compatibility with appimage-thumbnailer)
-            candidates.add("/usr/lib/appimage-thumbnailer");
-
-            // Per-user bundle locations
-            var xdg_data_home = Environment.get_variable("XDG_DATA_HOME");
-            if (xdg_data_home == null || xdg_data_home.strip() == "") {
-                xdg_data_home = Path.build_filename(Environment.get_home_dir(), ".local", "share");
-            }
-            candidates.add(Path.build_filename(xdg_data_home, "app-manager", "dwarfs"));
-            candidates.add(Path.build_filename(Environment.get_home_dir(), ".local", "share", "app-manager", "dwarfs"));
-
-            foreach (var base_dir in candidates) {
-                var extract_candidate = Path.build_filename(base_dir, "dwarfsextract");
+                var extract_candidate = Path.build_filename(env_dir.strip(), "dwarfsextract");
                 if (FileUtils.test(extract_candidate, FileTest.IS_EXECUTABLE)) {
                     extract_path = extract_candidate;
-                    break;
                 }
             }
 
+            // 2. Well-known user/system locations for manually installed tools
+            if (extract_path == null) {
+                var candidates = new Gee.ArrayList<string>();
+                candidates.add("/usr/lib/appimage-thumbnailer");
+                var xdg_data_home = Environment.get_variable("XDG_DATA_HOME");
+                if (xdg_data_home == null || xdg_data_home.strip() == "") {
+                    xdg_data_home = Path.build_filename(Environment.get_home_dir(), ".local", "share");
+                }
+                candidates.add(Path.build_filename(xdg_data_home, "app-manager", "dwarfs"));
+                candidates.add(Path.build_filename(Environment.get_home_dir(), ".local", "share", "app-manager", "dwarfs"));
+
+                foreach (var base_dir in candidates) {
+                    var extract_candidate = Path.build_filename(base_dir, "dwarfsextract");
+                    if (FileUtils.test(extract_candidate, FileTest.IS_EXECUTABLE)) {
+                        extract_path = extract_candidate;
+                        break;
+                    }
+                }
+            }
+
+            // 3. PATH lookup — covers native installs and AppImages (both
+            //    appimagetool and sharun/urantime prepend the bundled bin
+            //    dir to $PATH in AppRun)
             if (extract_path == null) {
                 var extract_found = Environment.find_program_in_path("dwarfsextract");
                 if (extract_found != null && extract_found.strip() != "") {
@@ -604,46 +595,10 @@ namespace AppManager.Core {
 
         private static int execute_7z(string[] arguments, out string? stdout_str, out string? stderr_str) throws Error {
             var cmd = new string[1 + arguments.length];
-            // Try bundled 7z first, then fall back to system 7z
-            string? resolved_7z = null;
-
-            // 1. Check next to the running executable (works in AppImages
-            //    where quick-sharun may restructure /usr/bin → /bin)
-            try {
-                var exe_path = FileUtils.read_link("/proc/self/exe");
-                var exe_dir = Path.get_dirname(exe_path);
-                var sibling_7z = Path.build_filename(exe_dir, "7z");
-                if (FileUtils.test(sibling_7z, FileTest.IS_EXECUTABLE)) {
-                    resolved_7z = sibling_7z;
-                }
-            } catch (Error e) {
-                // /proc/self/exe not available, skip
-            }
-
-            // 2. When running inside an AppImage, resolve relative to APPDIR
-            if (resolved_7z == null) {
-                var appdir = Environment.get_variable("APPDIR");
-                if (appdir != null && appdir != "" && SEVENZIP_BUNDLE_DIR != null && SEVENZIP_BUNDLE_DIR.strip() != "") {
-                    var relative_dir = SEVENZIP_BUNDLE_DIR.strip();
-                    if (relative_dir.has_prefix("/")) {
-                        relative_dir = relative_dir.substring(1);
-                    }
-                    var appimage_7z = Path.build_filename(appdir, relative_dir, "7z");
-                    if (FileUtils.test(appimage_7z, FileTest.IS_EXECUTABLE)) {
-                        resolved_7z = appimage_7z;
-                    }
-                }
-            }
-
-            // 3. Try the build-time bundle dir directly
-            if (resolved_7z == null) {
-                string bundled_7z = Path.build_filename(SEVENZIP_BUNDLE_DIR, "7z");
-                if (FileUtils.test(bundled_7z, FileTest.IS_EXECUTABLE)) {
-                    resolved_7z = bundled_7z;
-                }
-            }
-
-            cmd[0] = resolved_7z ?? "7z";
+            // Resolved via PATH — AppImage packaging (both appimagetool and
+            // sharun/urantime) prepends the bundled bin dir to $PATH in AppRun,
+            // so the co-located 7z is always found first.
+            cmd[0] = "7z";
             for (int i = 0; i < arguments.length; i++) {
                 cmd[i + 1] = arguments[i];
             }
