@@ -2,7 +2,13 @@
 set -euo pipefail
 
 REPO="${1:-kem-a/AppManager}"
-API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+VERSION="${2:-latest}"
+
+if [[ "$VERSION" == "latest" ]]; then
+  API_URL="https://api.github.com/repos/${REPO}/releases/latest"
+else
+  API_URL="https://api.github.com/repos/${REPO}/releases/tags/${VERSION}"
+fi
 
 # Optional token for higher rate limits or private repos
 CURL_ARGS=("-fsSL" "-H" "Accept: application/vnd.github+json" "-H" "User-Agent: AppManager-download-check")
