@@ -1,5 +1,5 @@
 project('app-manager', ['vala', 'c'],
-  version: '3.2.1',
+  version: '3.3.0',
   meson_version: '>=0.64.0'
 )
 
@@ -57,19 +57,10 @@ zsync_arch_map = {
 }
 zsync_arch = zsync_arch_map.get(host_cpu, '')
 
-# 7-Zip tools bundling
-# Version format: 2501 = 25.01 (version 25.01 adds zstd support)
-sevenzip_version = '2501'
-sevenzip_tools_dir = get_option('prefix') / get_option('bindir')
-bundle_7z = get_option('bundle_7z')
-
-# Map Meson's cpu_family to 7-Zip's naming convention
-sevenzip_arch_map = {
-  'x86_64': 'x86_64',
-  'aarch64': 'aarch64',
-  'arm': 'armhf',
-}
-sevenzip_arch = sevenzip_arch_map.get(host_cpu, '')
+# SquashFS tools bundling (unsquashfs)
+unsquashfs_version = '4.7.4'
+unsquashfs_tools_dir = get_option('prefix') / get_option('bindir')
+bundle_unsquashfs = get_option('bundle_unsquashfs')
 
 core_sources = files(
   'src/core/app_constants.vala',
@@ -129,18 +120,16 @@ elif bundle_zsync and zsync_arch == ''
   warning('Zsync tools bundling requested but architecture "@0@" is not supported'.format(host_cpu))
 endif
 
-# Fetch and install 7-Zip if requested and supported
-if bundle_7z and sevenzip_arch != ''
-  fetch_7z_script = files('scripts/fetch-7z-tools.sh')
-  sevenzip_tools = custom_target('7z-tools',
-    output: ['7z'],
-    build_by_default: bundle_7z,
-    command: ['sh', fetch_7z_script, sevenzip_version, sevenzip_arch, meson.current_build_dir()],
+# Build and install unsquashfs if requested
+if bundle_unsquashfs
+  build_unsquashfs_script = files('scripts/build-unsquashfs.sh')
+  unsquashfs_tools = custom_target('unsquashfs-tools',
+    output: ['unsquashfs'],
+    build_by_default: bundle_unsquashfs,
+    command: ['sh', build_unsquashfs_script, unsquashfs_version, meson.current_build_dir()],
     install: true,
-    install_dir: sevenzip_tools_dir
+    install_dir: unsquashfs_tools_dir
   )
-elif bundle_7z and sevenzip_arch == ''
-  warning('7-Zip bundling requested but architecture "@0@" is not supported'.format(host_cpu))
 endif
 
 subdir('data')

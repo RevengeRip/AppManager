@@ -102,7 +102,7 @@ rm -rf build-anyimage
 meson setup build-anyimage --prefix=/usr \
     -Dbundle_dwarfs=true \
     -Dbundle_zsync=true \
-    -Dbundle_7z=true
+    -Dbundle_unsquashfs=true
 meson compile -C build-anyimage
 meson install -C build-anyimage
 
@@ -145,19 +145,19 @@ echo "---------------------------------------------------------------"
 
 # Bundle main binary + helper tools invoked as subprocesses.
 # quick-sharun will auto-detect GTK4, libadwaita, and all their deps.
-# The helper tools (dwarfs, zsync2, 7z) are static binaries installed
+# The helper tools (dwarfs, zsync2, unsquashfs) are installed
 # by meson to /usr/bin — they need to be passed explicitly since the
 # app invokes them as child processes, not via dynamic linking.
 #
 # Additional notes:
-#   - 7z is a static binary installed by meson to /usr/bin/7z (bundled, not the Arch system package)
+#   - unsquashfs is built by meson and installed to /usr/bin/unsquashfs
 #   - /usr/share/vala is needed for Vala runtime data (may be required by some Vala apps)
 #   - GIO modules for TLS and proxy are needed since the app uses libsoup3 for networking
 "$QS" \
     /usr/bin/app-manager \
     /usr/bin/dwarfsextract \
     /usr/bin/zsync2 \
-    /usr/bin/7z \
+    /usr/bin/unsquashfs \
     /usr/share/vala \
     /usr/lib/gio/modules/libgiognomeproxy.so \
     /usr/lib/gio/modules/libgiognutls.so \
