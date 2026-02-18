@@ -319,10 +319,10 @@ namespace AppManager.Core {
                 return zsync_direct;
             }
 
-            // Handle gh-releases-zsync by resolving to actual zsync URL
-            var resolved_zsync_url = resolve_gh_releases_zsync(update_url);;
-            if (resolved_zsync_url != null) {
-                return new ZsyncDirectSource(resolved_zsync_url);
+            // Handle gh-releases-zsync by resolving to actual zsync URL with version
+            var resolved_zsync_source = resolve_gh_releases_zsync_source(update_url);
+            if (resolved_zsync_source != null) {
+                return resolved_zsync_source;
             }
 
             var normalized = normalize_update_url(update_url);
@@ -407,16 +407,6 @@ namespace AppManager.Core {
             }
             
             return null;
-        }
-
-        /**
-         * Legacy: Resolve gh-releases-zsync format to actual zsync download URL.
-         * Format: gh-releases-zsync|owner|repo|tag|filename-pattern
-         * Returns the resolved URL or null if not a gh-releases-zsync format or resolution fails.
-         */
-        private string? resolve_gh_releases_zsync(string update_info) {
-            var source = resolve_gh_releases_zsync_source(update_info);
-            return source != null ? source.zsync_url : null;
         }
 
         /**
@@ -715,16 +705,25 @@ namespace AppManager.Core {
                     AppManager.Utils.FileUtils.remove_dir_recursive(download.temp_dir);
                 }
 
-                // Store the release tag for version-less apps
-                if (release.tag_name != null && new_record != null) {
-                    new_record.last_release_tag = release.tag_name;
-                    registry.persist();
+                // Store the release tag and version for version-less apps
+                if (new_record != null) {
+                    if (release.tag_name != null) {
+                        new_record.last_release_tag = release.tag_name;
+                    }
+                    // Store version from release API if installer didn't detect one
+                    if ((new_record.version == null || new_record.version.strip() == "") &&
+                        release.version != null && release.version.strip() != "") {
+                        new_record.version = release.version;
+                    }
+                    // Use registry.update() to guard against file monitor
+                    // triggering registry.reload() after register()
+                    registry.update(new_record, false);
                 }
 
                 var display_version = release.tag_name ?? asset.name;
                 record_succeeded(record);
                 log_update_event(record, "UPDATED", "updated to %s".printf(display_version));
-                return new UpdateResult(record, UpdateStatus.UPDATED, _("Updated to %s").printf(display_version), release.version ?? display_version);
+                return new UpdateResult(new_record ?? record, UpdateStatus.UPDATED, _("Updated to %s").printf(display_version), release.version ?? display_version);
             } catch (Error e) {
                 warning("Failed to update %s: %s", record.name, e.message);
                 record_failed(record, e.message);
@@ -848,11 +847,15 @@ namespace AppManager.Core {
                 // Store the new fingerprint on the new record (upgrade returns a new record)
                 if (new_record != null) {
                     store_fingerprint(new_record, message);
+                    // Use registry.update() to guard against file monitor
+                    // triggering registry.reload() after register()
+                    registry.update(new_record, false);
+                } else {
+                    registry.persist();
                 }
-                registry.persist();
                 record_succeeded(record);
                 log_update_event(record, "UPDATED", "direct url fingerprint=%s".printf(current_fingerprint));
-                return new UpdateResult(record, UpdateStatus.UPDATED, _("Updated"), current_fingerprint);
+                return new UpdateResult(new_record ?? record, UpdateStatus.UPDATED, _("Updated"), current_fingerprint);
             } catch (Error e) {
                 warning("Failed to update %s via direct URL: %s", record.name, e.message);
                 record_failed(record, e.message);
@@ -1253,8 +1256,6 @@ namespace AppManager.Core {
                         
                         if (key == "filename" && value != "") {
                             info.filename = value;
-                            // Extract version from filename (e.g., "krita-5.2.15-x86_64.AppImage" -> "5.2.15")
-                            info.version = VersionUtils.sanitize(value);
                         } else if (key == "url" && value != "") {
                             info.url = value;
                         } else if (key == "sha-1" && value != "") {
@@ -1297,13 +1298,6 @@ namespace AppManager.Core {
             
             // Fetch zsync file info (contains version and SHA-1)
             var zsync_info = fetch_zsync_file_info(zsync_source.zsync_url, cancellable);
-            
-            // If we don't have version info from gh-releases-zsync, try to get it from the zsync file header
-            if (remote_version == null || remote_version.strip() == "") {
-                if (zsync_info != null && zsync_info.version != null && zsync_info.version.strip() != "") {
-                    remote_version = zsync_info.version;
-                }
-            }
             
             // If we have version info on both sides, use version comparison
             if (remote_version != null && remote_version.strip() != "" &&
@@ -1409,13 +1403,8 @@ namespace AppManager.Core {
             // Fetch zsync file info (contains version and SHA-1)
             var zsync_info = fetch_zsync_file_info(zsync_url, null);
             
-            // Get version info for checking and display
+            // Get version info for display (from GitHub tag)
             string? new_version = zsync_source.remote_version;
-            if (new_version == null || new_version.strip() == "") {
-                if (zsync_info != null && zsync_info.version != null) {
-                    new_version = zsync_info.version;
-                }
-            }
             
             // Get SHA-1 from zsync header for storage after update
             string? remote_sha1 = null;
@@ -1520,8 +1509,18 @@ namespace AppManager.Core {
                         // Non-fatal: fingerprint update failed
                     }
                     
-                    // Persist changes
-                    registry.persist();
+                    // Persist changes - use registry.update() to re-insert the record
+                    // into the HashTable before saving. This is critical because
+                    // installer.upgrade() -> registry.register() writes registry to disk
+                    // (with version=null), and the file monitor may trigger
+                    // registry.reload() which replaces in-memory records from disk,
+                    // orphaning our new_record reference. registry.update() ensures
+                    // the modified record (with version set) is re-inserted and saved.
+                    if (new_record != null) {
+                        registry.update(new_record, false);
+                    } else {
+                        registry.persist();
+                    }
                     
                     record_succeeded(record);
                     var version_msg = (new_version != null && new_version.strip() != "") 
@@ -1553,10 +1552,6 @@ namespace AppManager.Core {
                 if (zsync_info != null) {
                     if (zsync_info.url != null && zsync_info.url.strip() != "") {
                         download_url = zsync_info.url;
-                    }
-                    // Also update version if we got it from zsync header
-                    if (new_version == null && zsync_info.version != null) {
-                        new_version = zsync_info.version;
                     }
                     // Get SHA-1 for storage after update
                     if (zsync_info.sha1 != null && zsync_info.sha1.strip() != "") {
@@ -1606,8 +1601,13 @@ namespace AppManager.Core {
                     // Non-fatal
                 }
                 
-                // Persist changes
-                registry.persist();
+                // Persist changes - use registry.update() to guard against
+                // file monitor triggering registry.reload() after register()
+                if (new_record != null) {
+                    registry.update(new_record, false);
+                } else {
+                    registry.persist();
+                }
 
                 record_succeeded(record);
                 var version_msg = (new_version != null && new_version.strip() != "") 
