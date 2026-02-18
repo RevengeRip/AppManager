@@ -492,7 +492,9 @@ namespace AppManager.Core {
 
         private void cleanup_failed_installation(InstallationRecord record) {
             try {
-                if (record.installed_path != null) {
+                // Only clean up installed_path if it differs from source_path
+                // (i.e., if a move/copy actually happened before failure)
+                if (record.installed_path != null && record.installed_path != record.source_path) {
                     var installed_file = File.new_for_path(record.installed_path);
                     if (installed_file.query_exists()) {
                         if (installed_file.query_file_type(FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
