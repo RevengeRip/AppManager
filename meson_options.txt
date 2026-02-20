@@ -10,8 +10,8 @@ option('bundle_zsync',
   description: 'Bundle zsync2 tool for delta updates during build'
 )
 
-option('bundle_7z',
+option('bundle_unsquashfs',
   type: 'boolean',
   value: true,
-  description: 'Bundle 7-Zip (7z) tool for AppImage extraction during build'
+  description: 'Bundle unsquashfs tool for AppImage extraction during build'
 )
