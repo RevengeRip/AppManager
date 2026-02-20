@@ -22,9 +22,13 @@ namespace AppManager {
         private Gtk.Image arrow_icon;
         private Gtk.Overlay drag_overlay;
         private Gtk.Image drag_ghost;
+        private Gtk.Fixed ghost_container;
+        private double ghost_x = 0;
+        private double ghost_y = 0;
         private Gtk.Label app_name_label;
         private Gtk.Label folder_name_label;
         private Gtk.Box drag_box;
+        private Gtk.Box folder_column;
         private Gtk.Spinner drag_spinner;
         private Adw.Banner incompatibility_banner;
         private Adw.Banner architecture_banner;
@@ -118,13 +122,18 @@ namespace AppManager {
             toolbar_view.add_top_bar(verification_banner);
 
             var clamp = new Adw.Clamp();
-            clamp.margin_top = 24;
+            clamp.margin_top = 10;
             clamp.margin_bottom = 24;
             clamp.margin_start = 24;
             clamp.margin_end = 24;
+            clamp.vexpand = true;
+            clamp.valign = Gtk.Align.FILL;
             toolbar_view.content = clamp;
 
             var outer = new Gtk.Box(Gtk.Orientation.VERTICAL, 18);
+            outer.halign = Gtk.Align.CENTER;
+            outer.valign = Gtk.Align.CENTER;
+            outer.vexpand = true;
             clamp.child = outer;
 
             var install_dir_name = Path.get_basename(AppPaths.applications_dir);
@@ -183,7 +192,7 @@ namespace AppManager {
             drag_box.append(arrow_overlay);
 
             folder_icon = create_applications_icon();
-            var folder_column = build_icon_column(folder_icon, out folder_name_label, install_dir_name);
+            folder_column = build_icon_column(folder_icon, out folder_name_label, install_dir_name);
             drag_box.append(folder_column);
 
             drag_overlay = new Gtk.Overlay();
@@ -200,11 +209,14 @@ namespace AppManager {
             drag_ghost.add_css_class("drag-ghost");
             drag_ghost.set_opacity(0.0);
             drag_ghost.visible = false;
-            drag_ghost.halign = Gtk.Align.START;
-            drag_ghost.valign = Gtk.Align.START;
             drag_ghost.set_sensitive(false);
-            drag_overlay.add_overlay(drag_ghost);
-            drag_overlay.set_clip_overlay(drag_ghost, false);
+
+            ghost_container = new Gtk.Fixed();
+            ghost_container.set_can_target(false);
+            ghost_container.set_overflow(Gtk.Overflow.VISIBLE);
+            ghost_container.put(drag_ghost, 0, 0);
+            drag_overlay.add_overlay(ghost_container);
+            drag_overlay.set_clip_overlay(ghost_container, false);
 
             outer.append(drag_overlay);
             setup_drag_install(drag_box);
@@ -651,22 +663,14 @@ namespace AppManager {
             var gesture = new Gtk.GestureDrag();
             gesture.drag_begin.connect((start_x, start_y) => {
                 drag_container.add_css_class("drag-active");
-                show_drag_ghost(0);
+                show_drag_ghost(0, 0);
             });
             gesture.drag_update.connect((offset_x, offset_y) => {
-                update_drag_visual(offset_x);
+                update_drag_visual(offset_x, offset_y);
             });
             gesture.drag_end.connect((offset_x, offset_y) => {
                 drag_container.remove_css_class("drag-active");
-                var threshold = drag_container.get_width() * 0.45;
-                if (threshold <= 0) {
-                    threshold = 150;
-                }
-                var final_offset = offset_x;
-                if (final_offset < 0) {
-                    final_offset = 0;
-                }
-                if (final_offset >= threshold) {
+                if (is_ghost_over_folder()) {
                     start_install();
                 }
                 reset_drag_visual();
@@ -674,42 +678,51 @@ namespace AppManager {
             drag_container.add_controller(gesture);
         }
 
-        private void update_drag_visual(double offset_x) {
-            var clamped = offset_x;
-            if (clamped < 0) {
-                clamped = 0;
+        private void update_drag_visual(double offset_x, double offset_y) {
+            // Horizontal progress drives arrow/folder opacity
+            var h_clamped = offset_x;
+            if (h_clamped < 0) {
+                h_clamped = 0;
             }
-            if (clamped > DRAG_VISUAL_RANGE) {
-                clamped = DRAG_VISUAL_RANGE;
+            if (h_clamped > DRAG_VISUAL_RANGE) {
+                h_clamped = DRAG_VISUAL_RANGE;
             }
-
-            var progress = clamped / DRAG_VISUAL_RANGE;
-            arrow_icon.set_opacity(0.3 + progress * 0.7);
-            folder_icon.set_opacity(0.7 + progress * 0.3);
+            var h_progress = h_clamped / DRAG_VISUAL_RANGE;
+            arrow_icon.set_opacity(0.3 + h_progress * 0.7);
+            folder_icon.set_opacity(0.7 + h_progress * 0.3);
 
             if (drag_ghost != null) {
                 drag_ghost.visible = true;
-                drag_ghost.set_opacity(0.4 + progress * 0.6);
-                
+
+                // Ghost opacity based on total distance moved (squared to avoid libm sqrt)
+                var dist_sq = offset_x * offset_x + offset_y * offset_y;
+                var range_sq = DRAG_VISUAL_RANGE * DRAG_VISUAL_RANGE;
+                var d_progress = dist_sq / range_sq;
+                if (d_progress > 1.0) {
+                    d_progress = 1.0;
+                }
+                drag_ghost.set_opacity(0.4 + d_progress * 0.6);
+
                 int base_x, base_y;
                 compute_icon_position(out base_x, out base_y);
-                
-                drag_ghost.margin_start = base_x + (int)clamped;
-                drag_ghost.margin_top = base_y;
-                
-                check_folder_highlight(drag_ghost.margin_start, base_y);
+
+                ghost_x = base_x + offset_x;
+                ghost_y = base_y + offset_y;
+                ghost_container.move(drag_ghost, ghost_x, ghost_y);
+
+                check_folder_highlight(ghost_x, ghost_y);
             }
         }
 
-        private void check_folder_highlight(int ghost_x, int ghost_y) {
+        private void check_folder_highlight(double ghost_x, double ghost_y) {
             if (folder_icon == null || drag_overlay == null) {
                 return;
             }
             
             Graphene.Rect folder_bounds;
             if (folder_icon.compute_bounds(drag_overlay, out folder_bounds)) {
-                int ghost_center_x = ghost_x + 48;
-                int ghost_center_y = ghost_y + 48;
+                float ghost_center_x = (float)(ghost_x + 48);
+                float ghost_center_y = (float)(ghost_y + 48);
                 
                 var point = Graphene.Point();
                 point.init(ghost_center_x, ghost_center_y);
@@ -719,15 +732,21 @@ namespace AppManager {
                     if (folder_name_label != null) {
                         folder_name_label.add_css_class("accent");
                     }
+                    if (folder_column != null) {
+                        folder_column.add_css_class("drop-target-highlight");
+                    }
                 } else {
                     if (folder_name_label != null) {
                         folder_name_label.remove_css_class("accent");
+                    }
+                    if (folder_column != null) {
+                        folder_column.remove_css_class("drop-target-highlight");
                     }
                 }
             }
         }
 
-        private void show_drag_ghost(double offset_x) {
+        private void show_drag_ghost(double offset_x, double offset_y) {
             if (drag_ghost != null) {
                 drag_ghost.visible = true;
                 drag_ghost.set_opacity(0.0);
@@ -735,7 +754,7 @@ namespace AppManager {
             if (app_icon != null) {
                 app_icon.set_opacity(0.6);
             }
-            update_drag_visual(offset_x);
+            update_drag_visual(offset_x, offset_y);
         }
 
         private void reset_drag_visual() {
@@ -750,11 +769,15 @@ namespace AppManager {
                 
                 int base_x, base_y;
                 compute_icon_position(out base_x, out base_y);
-                drag_ghost.margin_start = base_x;
-                drag_ghost.margin_top = base_y;
+                ghost_x = base_x;
+                ghost_y = base_y;
+                ghost_container.move(drag_ghost, ghost_x, ghost_y);
             }
             if (folder_name_label != null) {
                 folder_name_label.remove_css_class("accent");
+            }
+            if (folder_column != null) {
+                folder_column.remove_css_class("drop-target-highlight");
             }
         }
 
@@ -880,6 +903,25 @@ namespace AppManager {
                 x = (int)icon_bounds.get_x();
                 y = (int)icon_bounds.get_y();
             }
+        }
+
+        private bool is_ghost_over_folder() {
+            if (folder_icon == null || drag_ghost == null || drag_overlay == null) {
+                return false;
+            }
+
+            Graphene.Rect folder_bounds;
+            if (!folder_icon.compute_bounds(drag_overlay, out folder_bounds)) {
+                return false;
+            }
+
+            float ghost_center_x = (float)(ghost_x + 48);
+            float ghost_center_y = (float)(ghost_y + 48);
+
+            var point = Graphene.Point();
+            point.init(ghost_center_x, ghost_center_y);
+
+            return folder_bounds.contains_point(point);
         }
 
         private Gtk.Box build_icon_column(Gtk.Widget icon_widget, out Gtk.Label label, string text, bool emphasize = false) {
