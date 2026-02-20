@@ -64,6 +64,12 @@ namespace AppManager.Core {
                 record.content_length = old_record.content_length;
                 record.last_release_tag = old_record.last_release_tag;
                 
+                // Carry over zsync fields from old record
+                // (zsync_update_info is also re-extracted from new AppImage in finalize_desktop_and_icon,
+                // but carry it over as safety net; zsync_sha1 is updated by the updater after upgrade)
+                record.zsync_update_info = old_record.zsync_update_info;
+                record.zsync_sha1 = old_record.zsync_sha1;
+                
                 // Carry over custom values from old record (user customizations survive updates)
                 record.custom_commandline_args = old_record.custom_commandline_args;
                 record.custom_keywords = old_record.custom_keywords;

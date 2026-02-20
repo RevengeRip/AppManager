@@ -28,6 +28,10 @@ namespace AppManager.Core {
         // If set, app uses zsync delta updates instead of full downloads
         public string? zsync_update_info { get; set; }
         
+        // SHA-1 checksum from zsync file header - used for reliable update detection
+        // when app filename has no version (e.g., zen-x86_64.AppImage)
+        public string? zsync_sha1 { get; set; }
+        
         // Original values captured from AppImage's .desktop during install/update
         public string? original_commandline_args { get; set; }
         public string? original_keywords { get; set; }
@@ -142,6 +146,12 @@ namespace AppManager.Core {
                 builder.add_string_value(zsync_update_info);
             }
             
+            // Zsync SHA-1 checksum for reliable update detection
+            if (zsync_sha1 != null && zsync_sha1.strip() != "") {
+                builder.set_member_name("zsync_sha1");
+                builder.add_string_value(zsync_sha1);
+            }
+            
             // Original values from AppImage's .desktop
             builder.set_member_name("original_commandline_args");
             builder.add_string_value(original_commandline_args ?? "");
@@ -247,6 +257,12 @@ namespace AppManager.Core {
             if (obj.has_member("zsync_update_info")) {
                 var zsync_info = obj.get_string_member("zsync_update_info");
                 record.zsync_update_info = (zsync_info != null && zsync_info.strip() != "") ? zsync_info : null;
+            }
+            
+            // Zsync SHA-1 checksum
+            if (obj.has_member("zsync_sha1")) {
+                var sha1 = obj.get_string_member("zsync_sha1");
+                record.zsync_sha1 = (sha1 != null && sha1.strip() != "") ? sha1 : null;
             }
             
             // Original values from AppImage's .desktop

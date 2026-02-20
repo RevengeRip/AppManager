@@ -12,6 +12,18 @@ namespace AppManager.Utils {
             return checksum.get_string();
         }
 
+        public static string compute_sha1(string path) throws Error {
+            var checksum = new GLib.Checksum(GLib.ChecksumType.SHA1);
+            var stream = File.new_for_path(path).read();
+            var buffer = new uint8[64 * 1024];
+            ssize_t read = 0;
+            while ((read = stream.read(buffer, null)) > 0) {
+                checksum.update(buffer, (size_t)read);
+            }
+            stream.close();
+            return checksum.get_string();
+        }
+
         public static void ensure_parent(string path) throws Error {
             var parent = Path.get_dirname(path);
             if (parent == null || parent == ".") {
