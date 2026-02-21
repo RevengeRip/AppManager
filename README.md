@@ -21,7 +21,7 @@ It also doesn't require FUSE to run, thanks to the [uruntime](https://github.com
 
 - **Drag-and-drop installer**: Mimics the familiar macOS Applications install flow.
 - **Smart install modes**: Can choose between portable (move the AppImage) and extracted (unpack to `~/Applications/.installed/AppRun`) while letting you override it.
-- **Desktop integration**: Extracts the bundled `.desktop` file via `7z` or `dwarfs`, rewrites `Exec` and `Icon`, and stores it in `~/.local/share/applications`.
+- **Desktop integration**: Extracts the bundled `.desktop` file via `unsquashfs` or `dwarfsextract`, rewrites `Exec` and `Icon`, and stores it in `~/.local/share/applications`.
 - **Simple uninstall**: Right click in app drawer and choose `Move to Trash`, can uninstall in AppManager or simply delete from `~/Applications` folder.
 - **Install registry + preferences**: Main window lists installed apps, default mode, and cleanup behaviors, all stored with GSettings.
 - **Background app updates**: Optional automatic update checks with configurable interval (daily, weekly, monthly) and notifications when updates are found.
@@ -30,7 +30,7 @@ It also doesn't require FUSE to run, thanks to the [uruntime](https://github.com
 
 - `valac`, `meson`, `ninja`
 - Libraries: `libadwaita-1` (>= 1.6), `gtk4`, `gio-2.0`, `glib-2.0`, `json-glib-1.0`, `gee-0.8`, `libsoup-3.0`
-- Runtime tools: `7z`/`p7zip-full`, `dwarfs`, `dwarfsextract`
+- Runtime tools: `unsquashfs`, `dwarfsextract`
 
 ## Install
 
