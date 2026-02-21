@@ -16,11 +16,19 @@ namespace AppManager.Core {
         if (i18n_initialized) return;
         i18n_initialized = true;
 
-        // Try the user's locale from environment; if unsupported, try common UTF-8 fallbacks
+        // Try the user's locale from environment; if unsupported, try common UTF-8 fallbacks.
+        // When falling back, also update environment variables so that GTK's internal
+        // setlocale(LC_ALL, "") call (during gtk_init) won't fail with a C locale warning.
         if (Intl.setlocale(LocaleCategory.ALL, "") == null) {
-            if (Intl.setlocale(LocaleCategory.ALL, "C.UTF-8") == null) {
+            string fallback;
+            if (Intl.setlocale(LocaleCategory.ALL, "C.UTF-8") != null) {
+                fallback = "C.UTF-8";
+            } else {
                 Intl.setlocale(LocaleCategory.ALL, "C");
+                fallback = "C";
             }
+            Environment.set_variable("LC_ALL", fallback, true);
+            Environment.set_variable("LANG", fallback, true);
         }
         Intl.bindtextdomain(GETTEXT_PACKAGE, get_locale_dir());
         Intl.bind_textdomain_codeset(GETTEXT_PACKAGE, "UTF-8");
