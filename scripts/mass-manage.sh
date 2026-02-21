@@ -1,7 +1,7 @@
 #!/bin/bash
 # Mass install/uninstall apps using app-manager
 
-VERSION="1.0.0"
+VERSION="1.0.1"
 AUTHOR="kem-a"
 SCRIPT_NAME=$(basename "$0")
 
@@ -19,8 +19,8 @@ Mass install or uninstall apps using app-manager.
 Usage: $SCRIPT_NAME -i|-u <path> [options]
 
 Actions:
-  -i, --install     Install all apps from the specified directory
-  -u, --uninstall   Uninstall all apps from the specified directory
+  -i, install       Install all apps from the specified directory
+  -u, uninstall     Uninstall all apps from the specified directory
                     (AppManager will be skipped)
 
 Options:
@@ -29,9 +29,9 @@ Options:
 
 Examples:
   $SCRIPT_NAME -i ~/Temp              Install all apps from ~/Temp
-  $SCRIPT_NAME --install ~/Downloads  Install all apps from ~/Downloads
+  $SCRIPT_NAME install ~/Downloads    Install all apps from ~/Downloads
   $SCRIPT_NAME -u ~/Applications      Uninstall all apps from ~/Applications
-  $SCRIPT_NAME --uninstall ~/Apps     Uninstall all apps from ~/Apps
+  $SCRIPT_NAME uninstall ~/Apps       Uninstall all apps from ~/Apps
 EOF
 }
 
@@ -126,7 +126,7 @@ while [[ $# -gt 0 ]]; do
             show_version
             exit 0
             ;;
-        -i|--install)
+        -i|install)
             ACTION="install"
             shift
             if [[ -n "$1" && ! "$1" =~ ^- ]]; then
@@ -134,7 +134,7 @@ while [[ $# -gt 0 ]]; do
                 shift
             fi
             ;;
-        -u|--uninstall)
+        -u|uninstall)
             ACTION="uninstall"
             shift
             if [[ -n "$1" && ! "$1" =~ ^- ]]; then
