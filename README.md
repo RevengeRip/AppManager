@@ -45,19 +45,19 @@ Install the development packages required to build AppManager on each distributi
 - **Debian / Ubuntu:**
 
 ```bash
-sudo apt install valac meson ninja-build pkg-config libadwaita-1-dev libgtk-4-dev libglib2.0-dev libjson-glib-dev libgee-0.8-dev libgirepository1.0-dev libsoup-3.0-dev p7zip-full cmake desktop-file-utils jq
+sudo apt install valac meson ninja-build pkg-config libadwaita-1-dev libgtk-4-dev libglib2.0-dev libjson-glib-dev libgee-0.8-dev libgirepository1.0-dev libsoup-3.0-dev cmake desktop-file-utils jq
 ```
 
 - **Fedora:**
 
 ```bash
-sudo dnf install vala meson ninja-build gtk4-devel libadwaita-devel glib2-devel json-glib-devel libgee-devel libsoup3-devel p7zip p7zip-plugins cmake desktop-file-utils jq
+sudo dnf install vala meson ninja-build gtk4-devel libadwaita-devel glib2-devel json-glib-devel libgee-devel libsoup3-devel cmake desktop-file-utils jq
 ```
 
 - **Arch Linux / Manjaro:**
 
 ```bash
-sudo pacman -S vala meson ninja gtk4 libadwaita glib2 json-glib libgee libsoup p7zip cmake desktop-file-utils jq
+sudo pacman -S vala meson ninja gtk4 libadwaita glib2 json-glib libgee libsoup cmake desktop-file-utils jq
 ```
 
 </details>

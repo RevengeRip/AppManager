@@ -69,7 +69,6 @@ namespace AppManager {
             if (this.view_mode != "list" && this.view_mode != "grid") {
                 this.view_mode = "list";
             }
-            //add_css_class("devel");
             this.set_default_size(settings.get_int("window-width"), settings.get_int("window-height"));
             build_ui();
             setup_window_actions();

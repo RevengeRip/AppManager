@@ -32,7 +32,7 @@ namespace AppManager {
             this.registry = registry;
             this.directory_monitor = directory_monitor;
             this.set_title(_("Preferences"));
-            this.content_height = 550;
+            this.content_height = 650;
             build_ui();
             
             // Remove focus from entry row when dialog is shown

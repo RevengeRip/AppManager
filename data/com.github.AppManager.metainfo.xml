@@ -12,14 +12,14 @@
 
   <!-- Copyright notice -->
   <custom>
-    <value key="Copyright">© 2025 Arnis Kemlers</value>
+    <value key="Copyright">© 2026 Arnis Kemlers</value>
   </custom>
 
   <!-- Bundled third-party components -->
   <bundle type="legal">
-    <name>7-Zip</name>
-    <copyright>© 1999-2024 Igor Pavlov</copyright>
-    <license>LGPL-2.1-or-later</license>
+    <name>squashfs-tools (unsquashfs)</name>
+    <copyright>© Phillip Lougher</copyright>
+    <license>GPL-2.0-or-later</license>
   </bundle>
   <bundle type="legal">
     <name>DwarFS</name>
@@ -42,10 +42,18 @@
     <binary>app-manager</binary>
   </provides>
   <releases>
-    <release version="1.0.0-beta" date="2025-12-24">
+    <release version="3.3.0" date="2026-02-21">
       <description>
-        <p>Initial preview with drag-and-drop installs, dual install modes, Nautilus menus, and preferences UI.</p>
-          <p>Added optional background update checks powered by the XDG Background portal. Users grant permission on first launch, can pick an interval, and receive a notification when updates are detected.</p>
+        <p>Replace 7-Zip with unsquashfs for AppImage extraction, improving reliability and reducing bundle size.</p>
+        <p>Fix zsync update handling to carry over fields from old records and support SHA-1 checksums.</p>
+        <p>Enhance drag-and-drop with visual feedback.</p>
+        <p>Fix cleanup logic in Installer to prevent app deletion on failure.</p>
+        <p>Improve i18n initialization with refined locale fallback logic.</p>
+      </description>
+    </release>
+    <release version="3.2.1" date="2025-12-24">
+      <description>
+        <p>Streamline executable resolution logic by using builtin env variable.</p>
       </description>
     </release>
   </releases>
