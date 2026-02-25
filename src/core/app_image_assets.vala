@@ -254,7 +254,9 @@ namespace AppManager.Core {
             string[] patterns = {
                 "usr/share/metainfo/*.metainfo.xml",
                 "usr/share/metainfo/*.appdata.xml",
-                "usr/share/appdata/*.appdata.xml"
+                "usr/share/appdata/*.appdata.xml",
+                "share/metainfo/*.metainfo.xml",
+                "share/metainfo/*.appdata.xml"
             };
 
             foreach (var pattern in patterns) {
